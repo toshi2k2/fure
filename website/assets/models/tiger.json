@@ -1,0 +1,51 @@
+{
+  "name": "tiger",
+  "url": "assets/models/tiger.bin",
+  "bytes": 5400084,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90024,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360096,
+      "length": 179997,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080084,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 265000,
+  "sourceBodyFaces": 159997,
+  "previewBodyFaces": 59999,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.45084184408187866,
+    0.19917427003383636,
+    0.03913004696369171
+  ],
+  "bounds": [
+    [
+      -1.4539309740066528,
+      -0.708187997341156,
+      -0.5005121827125549
+    ],
+    [
+      1.4056638479232788,
+      0.7425044178962708,
+      0.513137936592102
+    ]
+  ],
+  "sha256": "d45e09e808e1dcd1497456c7a0ca51c450c0836a9d661b4e4b2f93e22cfbe37a",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}

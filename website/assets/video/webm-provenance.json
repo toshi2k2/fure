@@ -1,0 +1,77 @@
+{
+  "streams": [
+    {
+      "index": 0,
+      "codec_name": "vp9",
+      "codec_long_name": "Google VP9",
+      "profile": "Profile 0",
+      "codec_type": "video",
+      "codec_time_base": "1/60",
+      "codec_tag_string": "[0][0][0][0]",
+      "codec_tag": "0x0000",
+      "width": 3840,
+      "height": 2160,
+      "coded_width": 3840,
+      "coded_height": 2160,
+      "closed_captions": 0,
+      "has_b_frames": 0,
+      "sample_aspect_ratio": "1:1",
+      "display_aspect_ratio": "16:9",
+      "pix_fmt": "yuv420p",
+      "level": -99,
+      "color_range": "tv",
+      "chroma_location": "left",
+      "field_order": "progressive",
+      "refs": 1,
+      "r_frame_rate": "60/1",
+      "avg_frame_rate": "60/1",
+      "time_base": "1/1000",
+      "start_pts": 0,
+      "start_time": "0.000000",
+      "nb_read_frames": "720",
+      "disposition": {
+        "default": 1,
+        "dub": 0,
+        "original": 0,
+        "comment": 0,
+        "lyrics": 0,
+        "karaoke": 0,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0,
+        "clean_effects": 0,
+        "attached_pic": 0,
+        "timed_thumbnails": 0
+      },
+      "tags": {
+        "HANDLER_NAME": "VideoHandler",
+        "VENDOR_ID": "[0][0][0][0]",
+        "ENCODER": "Lavc61.3.100 libvpx-vp9",
+        "DURATION": "00:00:12.000000000"
+      }
+    }
+  ],
+  "format": {
+    "filename": "/mnt/data0/prakhar/fure/website/assets/video/fox-strong-wind-4k60.webm",
+    "nb_streams": 1,
+    "nb_programs": 0,
+    "format_name": "matroska,webm",
+    "format_long_name": "Matroska / WebM",
+    "start_time": "0.000000",
+    "duration": "12.000000",
+    "size": "92381034",
+    "bit_rate": "61587356",
+    "probe_score": 100,
+    "tags": {
+      "COMPATIBLE_BRANDS": "isomiso2mp41",
+      "MAJOR_BRAND": "isom",
+      "MINOR_VERSION": "512",
+      "ENCODER": "Lavf61.1.100"
+    }
+  },
+  "source": "/mnt/data0/prakhar/Frosting/1_paper_vis/fox_wind_animation_3840x2160_60fps_allstrands_strongwind_static_v01/composite_fast_ffmpeg_0001_0720/fox_wind_stronggusts_static_allstrands_4k60_12sec_q1.mp4",
+  "source_sha256": "cd883d762043d9d70ef9d1598c6ba22e63a102d25397d3969810ac7832218713",
+  "export_sha256": "3d1e0a5b983aad6511f3b09ffb1b12c5c77895e701276b0cdc88fd29c4841851",
+  "source_strands": 265000,
+  "provenance": "Existing root-pinned wind simulation, not motion reconstructed from input views."
+}

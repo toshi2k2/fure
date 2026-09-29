@@ -1,0 +1,51 @@
+{
+  "name": "fox",
+  "url": "assets/models/fox.bin",
+  "bytes": 5400024,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90006,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360024,
+      "length": 180000,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080024,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 265000,
+  "sourceBodyFaces": 158682,
+  "previewBodyFaces": 60000,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.5086106061935425,
+    0.06057470291852951,
+    0.006941255182027817
+  ],
+  "bounds": [
+    [
+      -1.4930453300476074,
+      -0.6676403880119324,
+      -0.3367581069469452
+    ],
+    [
+      1.399999976158142,
+      0.671398937702179,
+      0.3612578511238098
+    ]
+  ],
+  "sha256": "3c9067f5ab544a57aa4d292dc49aba9026191cfe4a92e8727144f5e68b628aba",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}

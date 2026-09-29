@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f8f7f4" />
+    <title>FurE · Efficient 3D Fur Reconstruction</title>
+    <meta
+      name="description"
+      content="FurE reconstructs explicit, editable animal fur from multiview images with compact strand learning and local Gaussian Frosting cues. Johns Hopkins University."
+    />
+    <meta property="og:title" content="FurE · Every strand, reconstructed." />
+    <meta
+      property="og:description"
+      content="Efficient instance-specific 3D fur reconstruction without animal-fur datasets. Explore six reconstructed animals and a 4K wind simulation."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://toshi2k2.github.io/fure/" />
+    <meta
+      property="og:image"
+      content="https://toshi2k2.github.io/fure/assets/images/teaser-2560.webp"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="assets/fonts/InstrumentSerif-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a href="#overview" class="wordmark" aria-label="FurE home"
+        >Fur<span>E</span
+        ><svg viewBox="0 0 32 28" aria-hidden="true">
+          <path d="M4 25Q9 5 22 3M10 25Q15 9 28 8M17 25Q23 16 30 16" /></svg
+      ></a>
+      <nav aria-label="Main navigation">
+        <a href="#collection">Collection</a><a href="#method">Method</a
+        ><a href="#motion">In motion</a><a href="#citation">Citation</a>
+      </nav>
+      <a
+        href="assets/paper/FurE.pdf"
+        class="header-paper"
+        target="_blank"
+        rel="noopener"
+        >Read the paper <span aria-hidden="true">↗</span></a
+      >
+    </header>
+
+    <main id="main">
+      <section id="overview" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            Johns Hopkins University <span class="eyebrow-dot"></span> Computer
+            Vision Research
+          </p>
+          <div class="hero-wordmark" aria-hidden="true">
+            Fur<span>E</span><span class="brand-period">.</span>
+          </div>
+          <h1>
+            Efficient instance-specific 3D fur reconstruction<br /><em
+              >without animal-fur datasets.</em
+            >
+          </h1>
+          <div class="authors" aria-label="Paper authors">
+            <div
+              id="first-authors"
+              class="first-authors"
+              aria-label="Equal-contribution authors; order alternates every five seconds"
+            >
+              <a
+                href="mailto:ssarka29@jh.edu"
+                data-author="Srinjay Sarkar"
+                aria-label="Srinjay Sarkar, equal contribution"
+                >Srinjay Sarkar<sup aria-hidden="true">★</sup></a
+              >
+              <a
+                href="mailto:pkaushi1@jh.edu"
+                data-author="Prakhar Kaushik"
+                aria-label="Prakhar Kaushik, equal contribution, project lead"
+                >Prakhar Kaushik<sup aria-hidden="true">★†</sup></a
+              >
+            </div>
+            <a href="mailto:spaul27@jh.edu">Soumava Paul</a
+            ><a href="mailto:ayuille1@jh.edu">Alan Yuille</a>
+          </div>
+          <div class="author-notes">
+            <span>★ Equal contribution</span><span>† Project lead</span
+            ><button
+              id="author-pause"
+              type="button"
+              aria-pressed="false"
+              title="Pause the five-second co-first-author rotation"
+            >
+              Pause author order <span aria-hidden="true">Ⅱ</span>
+            </button>
+          </div>
+          <div class="hero-actions">
+            <a
+              class="button primary"
+              href="assets/paper/FurE.pdf"
+              target="_blank"
+              rel="noopener"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6" /></svg
+              >Paper <span aria-hidden="true">↗</span></a
+            ><a
+              class="button secondary"
+              href="https://github.com/toshi2k2/fure"
+              target="_blank"
+              rel="noopener"
+              >Code <span aria-hidden="true">↗</span></a
+            ><a class="text-link" href="#motion"
+              >Watch it move <span aria-hidden="true">↘</span></a
+            >
+          </div>
+        </div>
+        <figure class="hero-figure">
+          <img
+            src="assets/images/teaser-2560.webp"
+            srcset="
+              assets/images/teaser-1280.webp 1280w,
+              assets/images/teaser-2560.webp 2560w
+            "
+            sizes="(max-width: 800px) 100vw, 96vw"
+            width="2560"
+            height="1080"
+            alt="Six reconstructed furry animals in a dark studio: tiger, fox, cat, beagle, panda, and a bison behind them."
+            fetchpriority="high"
+          />
+          <div class="hero-image-label">
+            <span class="status-dot"></span> Reconstructed geometry. Individual
+            strands.
+          </div>
+        </figure>
+        <div class="hero-caption">
+          <span>Six animals. Over 1.26 million rendered strands.</span
+          ><span>Explicit · Editable · Animatable</span>
+        </div>
+      </section>
+
+      <section class="intro section-shell reveal" aria-labelledby="idea-title">
+        <div class="section-marker"><span>01</span> The idea</div>
+        <div class="intro-copy">
+          <h2 id="idea-title">
+            Not just the look of fur.<br /><em>The geometry behind it.</em>
+          </h2>
+          <p>
+            Fur is more than a surface. It is hundreds of thousands of fine
+            strands, each with its own shape, direction, and attachment to the
+            body. FurE recovers this explicit structure from calibrated
+            multiview images.
+          </p>
+          <p>
+            We combine local Gaussian Frosting cues with a compact PCA-based
+            strand decoder initialized from human-hair data. The result is an
+            instance-specific, editable groom, without requiring a separate
+            animal-fur training dataset.
+          </p>
+          <div class="idea-tags">
+            <span>Multiview images in</span><span aria-hidden="true">⟶</span
+            ><span>Editable 3D strands out</span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="collection"
+        class="collection section-shell reveal"
+        aria-labelledby="collection-title"
+      >
+        <div class="section-heading">
+          <div>
+            <div class="section-marker"><span>02</span> The collection</div>
+            <h2 id="collection-title">
+              A closer look, <em>strand by strand.</em>
+            </h2>
+          </div>
+          <p>Six animals. Distinct coats.<br />One explicit representation.</p>
+        </div>
+        <div class="animal-tabs" role="tablist" aria-label="Choose an animal">
+          <button
+            role="tab"
+            id="tab-cat"
+            aria-controls="animal-panel"
+            aria-selected="true"
+            data-animal="cat"
+          >
+            Cat</button
+          ><button
+            role="tab"
+            id="tab-fox"
+            aria-controls="animal-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-animal="fox"
+          >
+            Fox</button
+          ><button
+            role="tab"
+            id="tab-tiger"
+            aria-controls="animal-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-animal="tiger"
+          >
+            Tiger</button
+          ><button
+            role="tab"
+            id="tab-beagle"
+            aria-controls="animal-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-animal="beagle"
+          >
+            Beagle</button
+          ><button
+            role="tab"
+            id="tab-panda"
+            aria-controls="animal-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-animal="panda"
+          >
+            Panda</button
+          ><button
+            role="tab"
+            id="tab-bison"
+            aria-controls="animal-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-animal="bison"
+          >
+            Bison <span>Real capture</span>
+          </button>
+        </div>
+        <div
+          class="animal-panel"
+          id="animal-panel"
+          role="tabpanel"
+          aria-labelledby="tab-cat"
+        >
+          <div class="viewer-stage" id="viewer-stage">
+            <img
+              id="animal-image"
+              src="assets/images/cat.webp"
+              width="1600"
+              height="1000"
+              loading="lazy"
+              alt="Full-density studio rendering of the reconstructed cat and its underlying body."
+            />
+            <div
+              id="webgl-viewer"
+              hidden
+              tabindex="0"
+              aria-label="Interactive 3D animal. Drag to orbit, scroll or pinch to zoom, arrow keys to pan."
+            ></div>
+            <div class="viewer-topline">
+              <span id="animal-index">01 / 06</span>
+              <div class="view-modes" aria-label="Visualization mode">
+                <button id="studio-mode" type="button" aria-pressed="true">
+                  Studio</button
+                ><button
+                  id="interactive-mode"
+                  type="button"
+                  aria-pressed="false"
+                >
+                  Explore 3D <span aria-hidden="true">◇</span>
+                </button>
+              </div>
+            </div>
+            <div class="viewer-bottomline">
+              <span id="viewer-note"
+                >Full-density render · original teaser palette</span
+              ><button
+                id="viewer-fullscreen"
+                type="button"
+                aria-label="View animal fullscreen"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+            <div id="viewer-loading" role="status" hidden></div>
+            <div id="geometry-controls" hidden>
+              <button type="button" id="show-body" aria-pressed="true">
+                Body</button
+              ><button type="button" id="show-strands" aria-pressed="true">
+                Strands</button
+              ><button type="button" id="reset-view">Reset view ↺</button>
+            </div>
+          </div>
+          <div class="animal-info">
+            <div>
+              <p class="eyebrow" id="animal-source">Artemis</p>
+              <h3 id="animal-name">Cat</h3>
+            </div>
+            <p id="animal-description">
+              Fine strands, a full coat, and a distinct silhouette. Inspect the
+              explicit geometry beneath the studio rendering.
+            </p>
+            <div class="strand-count">
+              <strong id="strand-count">310,000</strong
+              ><span>source strands</span>
+            </div>
+          </div>
+        </div>
+        <p class="fine-print">
+          Studio images retain all source strands, with the approved
+          illustrative teaser colors. Interactive views load a lighter sample of
+          the same geometry, not a new reconstruction.
+        </p>
+      </section>
+
+      <section
+        id="method"
+        class="method section-shell reveal"
+        aria-labelledby="method-title"
+      >
+        <div class="section-heading">
+          <div>
+            <div class="section-marker"><span>03</span> How it works</div>
+            <h2 id="method-title">
+              From photographs<br />to <em>fur you can work with.</em>
+            </h2>
+          </div>
+          <a
+            class="text-link"
+            href="assets/paper/FurE.pdf"
+            target="_blank"
+            rel="noopener"
+            >Read the full method ↗</a
+          >
+        </div>
+        <figure class="method-figure">
+          <img
+            src="assets/images/method.webp"
+            alt="FurE pipeline: multiview input, surface and Frosting cues, body-part segmentation, defurring, root sampling, and PCA decoding into reconstructed fur."
+            width="2200"
+            height="900"
+            loading="lazy"
+          />
+        </figure>
+        <div class="method-steps">
+          <article>
+            <span class="step-number">01 / BENEATH THE COAT</span>
+            <h3>Find the root surface.</h3>
+            <p>
+              NeuS2 reconstructs the visible coat. Local Frosting shell widths
+              and verified body parts guide a bounded, smooth estimate of the
+              hidden surface where strands attach.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">02 / COMPACT STRAND LEARNING</span>
+            <h3>Learn less. Reconstruct more.</h3>
+            <p>
+              A root-conditioned latent field predicts compact shape
+              coefficients. A PCA decoder initialized from human hair turns them
+              into explicit strands, scaled and oriented at their roots.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">03 / MULTIVIEW OPTIMIZATION</span>
+            <h3>Bring every view together.</h3>
+            <p>
+              Strand-aligned Gaussians make the groom differentiably renderable.
+              Optimizing against the input views refines the instance-specific
+              strand representation.
+            </p>
+          </article>
+        </div>
+        <details class="method-detail">
+          <summary>
+            A local cue, not a direct fur-length measurement
+            <span aria-hidden="true">+</span>
+          </summary>
+          <div>
+            <p>
+              Frosting shell width indicates relative volumetric support around
+              the surface. We calibrate it with part-level priors rather than
+              treating it as measured skin depth or strand arc length. Root
+              displacement and strand-length initialization are separate
+              estimates.
+            </p>
+            <img
+              src="assets/images/thickness.webp"
+              loading="lazy"
+              alt="Paper figure showing local Frosting thickness heatmaps and per-part comparisons of shape-calibrated and VLM-assisted strand lengths."
+            />
+          </div>
+        </details>
+      </section>
+
+      <section class="efficiency reveal" aria-labelledby="efficiency-title">
+        <div class="section-shell efficiency-inner">
+          <div>
+            <div class="section-marker"><span>04</span> Efficiency</div>
+            <h2 id="efficiency-title">
+              Compact codes.<br /><em>Shorter training.</em>
+            </h2>
+            <p>
+              Optimize a small representation of strand shape instead of every
+              3D point independently.
+            </p>
+          </div>
+          <div class="runtime">
+            <div class="runtime-row">
+              <div>
+                <span>NeuralFur</span><strong>10.5 <small>hours</small></strong>
+              </div>
+              <div class="runtime-track">
+                <span class="baseline-bar"></span>
+              </div>
+            </div>
+            <div class="runtime-row ours">
+              <div>
+                <span>FurE</span><strong>52 <small>minutes</small></strong>
+              </div>
+              <div class="runtime-track"><span class="ours-bar"></span></div>
+            </div>
+            <p class="fine-print">
+              Strand-training times reported in the current manuscript.<br />36
+              views · NVIDIA RTX A5000 · excludes preprocessing.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="motion"
+        class="motion section-shell reveal"
+        aria-labelledby="motion-title"
+      >
+        <div class="section-heading">
+          <div>
+            <div class="section-marker">
+              <span>05</span> Beyond the reconstruction
+            </div>
+            <h2 id="motion-title">
+              A little wind.<br /><em>A world of detail.</em>
+            </h2>
+          </div>
+          <p>
+            Explicit strands become a groom<br />you can animate and art-direct.
+          </p>
+        </div>
+        <div class="film">
+          <video
+            id="wind-video"
+            controls
+            playsinline
+            loop
+            preload="none"
+            poster="assets/images/fox-wind-poster.webp"
+            width="3840"
+            height="2160"
+            aria-label="Twelve-second 4K fox fur wind simulation with changing wind direction and strength"
+          >
+            <source
+              data-src="assets/video/fox-strong-wind-4k60.mp4"
+              type="video/mp4"
+            />
+            Your browser cannot play this video. Use the download link below.</video
+          ><button
+            id="play-film"
+            class="play-film"
+            type="button"
+            aria-label="Play 4K strong-wind fox film"
+          >
+            <span class="play-icon" aria-hidden="true">▶</span
+            ><span>Play the film<small>4K · 60 FPS · 12 SECONDS</small></span>
+          </button>
+          <div class="film-badge">265,000 strands. All in motion.</div>
+        </div>
+        <div class="film-caption">
+          <p>
+            Root-pinned strands respond to changing wind intensity and
+            direction. This is a downstream wind simulation of the reconstructed
+            asset, not motion recovered from the input photographs.
+          </p>
+          <a
+            class="text-link"
+            href="assets/video/fox-strong-wind-4k60.mp4"
+            download
+            >Download 4K film ↓</a
+          >
+        </div>
+      </section>
+
+      <section
+        class="real-world section-shell reveal"
+        aria-labelledby="real-title"
+      >
+        <div class="real-copy">
+          <div class="section-marker">
+            <span>06</span> Beyond synthetic scenes
+          </div>
+          <h2 id="real-title">Into the<br /><em>real world.</em></h2>
+          <p>
+            Real captures bring clutter, uneven views, and complex coats. The
+            bison sequence explores FurE beyond synthetic animals, connecting
+            multiview observations to an explicit, editable asset.
+          </p>
+          <button class="text-link" id="inspect-bison" type="button">
+            Explore the bison ↗
+          </button>
+        </div>
+        <figure>
+          <img
+            src="assets/images/bison-capture.webp"
+            alt="Bison photographs and reconstructed fur from the paper's real-capture experiment."
+            loading="lazy"
+            width="2200"
+            height="1200"
+          />
+          <figcaption>
+            Real-world bison sequence · figure from the manuscript
+          </figcaption>
+        </figure>
+      </section>
+
+      <section
+        id="citation"
+        class="citation section-shell reveal"
+        aria-labelledby="citation-title"
+      >
+        <div class="section-heading">
+          <div>
+            <div class="section-marker"><span>07</span> Reference</div>
+            <h2 id="citation-title">Build on <em>FurE.</em></h2>
+          </div>
+          <p>
+            Publication details are coming soon.<br />This BibTeX entry is a
+            placeholder.
+          </p>
+        </div>
+        <div class="bibtex-panel">
+          <div class="bibtex-header">
+            <span>BibTeX <span class="draft-tag">Placeholder</span></span
+            ><button id="copy-bibtex" type="button">
+              Copy citation <span aria-hidden="true">⧉</span>
+            </button>
+          </div>
+          <pre><code id="bibtex">@misc{fure,
+  title  = {FurE: Efficient Instance-Specific 3D Fur
+            Reconstruction without Animal-Fur Datasets},
+  author = {Sarkar, Srinjay and Kaushik, Prakhar and
+            Paul, Soumava and Yuille, Alan},
+  year   = {TODO},
+  note   = {Placeholder: publication details forthcoming},
+  url    = {https://toshi2k2.github.io/fure/}
+}</code></pre>
+          <span id="copy-status" role="status" class="sr-only"></span>
+        </div>
+      </section>
+    </main>
+    <footer class="section-shell">
+      <a href="#overview" class="wordmark"
+        >Fur<span>E</span><span class="brand-period">.</span></a
+      >
+      <p>Fine detail. Explicit geometry.<br />Johns Hopkins University</p>
+      <a href="https://github.com/toshi2k2/fure" target="_blank" rel="noopener"
+        >Project repository ↗</a
+      >
+    </footer>
+    <noscript
+      ><p class="no-script">
+        The paper, figures, and download links work without JavaScript. Enable
+        JavaScript for rotating author order and interactive 3D previews.
+      </p></noscript
+    >
+  </body>
+</html>

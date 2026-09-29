@@ -1,0 +1,51 @@
+{
+  "name": "panda",
+  "url": "assets/models/panda.bin",
+  "bytes": 5400024,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90006,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360024,
+      "length": 180000,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080024,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 220000,
+  "sourceBodyFaces": 680572,
+  "previewBodyFaces": 60000,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.40752553939819336,
+    0.38681885600090027,
+    0.3013186752796173
+  ],
+  "bounds": [
+    [
+      -1.4021223783493042,
+      -0.9123280048370361,
+      -0.9007090926170349
+    ],
+    [
+      1.4680086374282837,
+      0.9463772177696228,
+      0.9525851607322693
+    ]
+  ],
+  "sha256": "593a7d46304142c4124e98c8788b5d239b278db359559bee2c26eb9794796d98",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}

@@ -1,0 +1,80 @@
+{
+  "streams": [
+    {
+      "index": 0,
+      "codec_name": "h264",
+      "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+      "profile": "High",
+      "codec_type": "video",
+      "codec_time_base": "1/120",
+      "codec_tag_string": "avc1",
+      "codec_tag": "0x31637661",
+      "width": 3840,
+      "height": 2160,
+      "coded_width": 3840,
+      "coded_height": 2160,
+      "closed_captions": 0,
+      "has_b_frames": 2,
+      "sample_aspect_ratio": "1:1",
+      "display_aspect_ratio": "16:9",
+      "pix_fmt": "yuv420p",
+      "level": 52,
+      "chroma_location": "left",
+      "refs": 1,
+      "is_avc": "true",
+      "nal_length_size": "4",
+      "r_frame_rate": "60/1",
+      "avg_frame_rate": "60/1",
+      "time_base": "1/15360",
+      "start_pts": 0,
+      "start_time": "0.000000",
+      "duration_ts": 184320,
+      "duration": "12.000000",
+      "bit_rate": "58949702",
+      "bits_per_raw_sample": "8",
+      "nb_frames": "720",
+      "disposition": {
+        "default": 1,
+        "dub": 0,
+        "original": 0,
+        "comment": 0,
+        "lyrics": 0,
+        "karaoke": 0,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0,
+        "clean_effects": 0,
+        "attached_pic": 0,
+        "timed_thumbnails": 0
+      },
+      "tags": {
+        "language": "und",
+        "handler_name": "VideoHandler",
+        "encoder": "Lavc61.3.100 libx264"
+      }
+    }
+  ],
+  "format": {
+    "filename": "/mnt/data0/prakhar/fure/website/assets/video/fox-strong-wind-4k60.mp4",
+    "nb_streams": 1,
+    "nb_programs": 0,
+    "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+    "format_long_name": "QuickTime / MOV",
+    "start_time": "0.000000",
+    "duration": "12.000000",
+    "size": "88431792",
+    "bit_rate": "58954528",
+    "probe_score": 100,
+    "tags": {
+      "major_brand": "isom",
+      "minor_version": "512",
+      "compatible_brands": "isomiso2avc1mp41",
+      "encoder": "Lavf61.1.100"
+    }
+  },
+  "source": "/mnt/data0/prakhar/Frosting/1_paper_vis/fox_wind_animation_3840x2160_60fps_allstrands_strongwind_static_v01/composite_fast_ffmpeg_0001_0720/fox_wind_stronggusts_static_allstrands_4k60_12sec_q1.mp4",
+  "source_sha256": "cd883d762043d9d70ef9d1598c6ba22e63a102d25397d3969810ac7832218713",
+  "export_sha256": "5e8d73be43c5e6c8f5d4839f958b0cec598e7ef70bf78924d7f2345671a6d159",
+  "source_strands": 265000,
+  "provenance": "Existing root-pinned wind simulation, not motion reconstructed from input views."
+}

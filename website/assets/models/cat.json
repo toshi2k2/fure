@@ -1,0 +1,51 @@
+{
+  "name": "cat",
+  "url": "assets/models/cat.bin",
+  "bytes": 5399988,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90003,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360012,
+      "length": 179994,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1079988,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 310000,
+  "sourceBodyFaces": 148794,
+  "previewBodyFaces": 59998,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.40752553939819336,
+    0.21330136060714722,
+    0.09200630336999893
+  ],
+  "bounds": [
+    [
+      -1.4216022491455078,
+      -1.2417670488357544,
+      -0.3951244652271271
+    ],
+    [
+      1.4350756406784058,
+      1.348294734954834,
+      0.40127283334732056
+    ]
+  ],
+  "sha256": "3ee80557621707344a957812b9ae8042d43570e80c10934942ab18cf6fd7c8d8",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}

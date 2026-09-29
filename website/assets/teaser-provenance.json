@@ -1,0 +1,656 @@
+{
+  "animal_specs": {
+    "beagle": {
+      "body_color": [
+        0.16,
+        0.1,
+        0.065,
+        1.0
+      ],
+      "body_file": "beagle_dog.ply",
+      "hair_palette": [
+        [
+          0.025,
+          0.018,
+          0.012,
+          1.0
+        ],
+        [
+          0.35,
+          0.16,
+          0.055,
+          1.0
+        ],
+        [
+          0.74,
+          0.67,
+          0.53,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.00075,
+      "length_sign": -1.0,
+      "name": "beagle",
+      "strand_file": "beagle.ply",
+      "target_height": 0.8,
+      "vertical_sign": 1.0,
+      "yaw_degrees": -16.0
+    },
+    "bison": {
+      "body_color": [
+        0.13,
+        0.065,
+        0.035,
+        1.0
+      ],
+      "body_file": "bison.obj",
+      "hair_palette": [
+        [
+          0.026,
+          0.012,
+          0.007,
+          1.0
+        ],
+        [
+          0.065,
+          0.026,
+          0.012,
+          1.0
+        ],
+        [
+          0.14,
+          0.058,
+          0.024,
+          1.0
+        ],
+        [
+          0.28,
+          0.13,
+          0.052,
+          1.0
+        ],
+        [
+          0.46,
+          0.27,
+          0.13,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.00062,
+      "length_sign": 1.0,
+      "name": "bison",
+      "strand_file": "bison.ply",
+      "target_height": 1.34,
+      "vertical_sign": -1.0,
+      "yaw_degrees": 10.0
+    },
+    "cat": {
+      "body_color": [
+        0.31,
+        0.19,
+        0.11,
+        1.0
+      ],
+      "body_file": "cat.ply",
+      "hair_palette": [
+        [
+          0.2,
+          0.1,
+          0.045,
+          1.0
+        ],
+        [
+          0.48,
+          0.25,
+          0.1,
+          1.0
+        ],
+        [
+          0.78,
+          0.52,
+          0.25,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.00075,
+      "length_sign": -1.0,
+      "name": "cat",
+      "strand_file": "cat.ply",
+      "target_height": 0.78,
+      "vertical_sign": 1.0,
+      "yaw_degrees": -14.0
+    },
+    "fox": {
+      "body_color": [
+        0.34,
+        0.075,
+        0.018,
+        1.0
+      ],
+      "body_file": "fox.ply",
+      "hair_palette": [
+        [
+          0.035,
+          0.018,
+          0.01,
+          1.0
+        ],
+        [
+          0.55,
+          0.105,
+          0.018,
+          1.0
+        ],
+        [
+          0.95,
+          0.31,
+          0.055,
+          1.0
+        ],
+        [
+          0.72,
+          0.63,
+          0.48,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.00068,
+      "length_sign": 1.0,
+      "name": "fox",
+      "strand_file": "fox.ply",
+      "target_height": 0.94,
+      "vertical_sign": 1.0,
+      "yaw_degrees": 14.0
+    },
+    "panda": {
+      "body_color": [
+        0.16,
+        0.16,
+        0.15,
+        1.0
+      ],
+      "body_file": "panda.ply",
+      "hair_palette": [
+        [
+          0.012,
+          0.014,
+          0.015,
+          1.0
+        ],
+        [
+          0.55,
+          0.55,
+          0.5,
+          1.0
+        ],
+        [
+          0.88,
+          0.86,
+          0.75,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.0008,
+      "length_sign": -1.0,
+      "name": "panda",
+      "strand_file": "panda.ply",
+      "target_height": 1.12,
+      "vertical_sign": 1.0,
+      "yaw_degrees": -12.0
+    },
+    "tiger": {
+      "body_color": [
+        0.37,
+        0.39,
+        0.38,
+        1.0
+      ],
+      "body_file": "whitetiger.ply",
+      "hair_palette": [
+        [
+          0.025,
+          0.03,
+          0.033,
+          1.0
+        ],
+        [
+          0.32,
+          0.35,
+          0.36,
+          1.0
+        ],
+        [
+          0.73,
+          0.76,
+          0.75,
+          1.0
+        ],
+        [
+          0.93,
+          0.91,
+          0.83,
+          1.0
+        ]
+      ],
+      "hair_radius": 0.00068,
+      "length_sign": 1.0,
+      "name": "tiger",
+      "strand_file": "tiger.ply",
+      "target_height": 1.2,
+      "vertical_sign": 1.0,
+      "yaw_degrees": 12.0
+    }
+  },
+  "animals": {
+    "beagle": {
+      "body_faces": 159999,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/beagle_dog.ply",
+      "body_vertices": 80010,
+      "hero_layout": {
+        "position": [
+          2.1,
+          -0.65
+        ],
+        "scale": 1.03,
+        "yaw_degrees": 0.0
+      },
+      "render_pose_grounding": null,
+      "source_supported_eye": null,
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/beagle.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 4447,
+        "partition_candidate_strands": 100000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "root_body_distance_p50_source": 0.0007498559425584972,
+        "root_body_distance_p95_source": 0.0014507312327623366,
+        "selected_strands_after_filter": 100000,
+        "selected_strands_before_filter": 100000,
+        "source_strands_after_filter": 100000,
+        "source_vertices": 10000000,
+        "total_strands": 100000
+      },
+      "transform": {
+        "body_bounds_max": [
+          0.6980559229850769,
+          0.21940192580223083,
+          1.0299999713897705
+        ],
+        "body_bounds_min": [
+          -0.6980559229850769,
+          -0.21940192580223083,
+          0.0
+        ],
+        "center_xy": [
+          -0.049042195081710815,
+          0.0004815496504306793
+        ],
+        "floor_z": -0.003554099937900901,
+        "scale": 2.833297546018557,
+        "target_height": 1.03
+      }
+    },
+    "bison": {
+      "body_faces": 43868,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/bison.obj",
+      "body_vertices": 21934,
+      "hero_layout": {
+        "position": [
+          -0.05,
+          0.65
+        ],
+        "scale": 0.96,
+        "yaw_degrees": 58.0
+      },
+      "render_pose_grounding": {
+        "corrected_strand_count": 13139,
+        "corrected_vertex_count": 3176,
+        "front_left": {
+          "applied_extension": 0.0,
+          "foot_height_before": 0.0
+        },
+        "front_right": {
+          "applied_extension": 0.23522475361824036,
+          "foot_height_before": 0.23522475361824036
+        },
+        "max_vertex_extension": 0.23522475361824036,
+        "rear_right": {
+          "applied_extension": 0.1974756419658661,
+          "foot_height_before": 0.1974756419658661
+        }
+      },
+      "source_supported_eye": {
+        "center": [
+          -0.8102847337722778,
+          0.7012132406234741,
+          1.1513270139694214
+        ],
+        "outward_normal": [
+          0.021910538896918297,
+          0.9922786355018616,
+          0.12207808345556259
+        ],
+        "radius": 0.027,
+        "support_vertex_count": 114
+      },
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/bison.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 137,
+        "partition_candidate_strands": 105000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "removed_hard_surface_strands": 7,
+        "root_body_distance_p50_source": 0.012668807059526443,
+        "root_body_distance_p95_source": 0.020737271755933755,
+        "selected_strands_after_filter": 104993,
+        "selected_strands_before_filter": 105000,
+        "source_strands_after_filter": 104993,
+        "source_vertices": 10500000,
+        "total_strands": 105000
+      },
+      "transform": {
+        "body_bounds_max": [
+          1.031341791152954,
+          0.8539423942565918,
+          1.5179519653320312
+        ],
+        "body_bounds_min": [
+          -1.031341791152954,
+          -0.8539423942565918,
+          0.0
+        ],
+        "center_xy": [
+          0.015079200267791748,
+          -0.08709406852722168
+        ],
+        "floor_z": -1.9869416952133179,
+        "scale": 0.5244249835844554,
+        "target_height": 1.517952
+      }
+    },
+    "cat": {
+      "body_faces": 148794,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/cat.ply",
+      "body_vertices": 74399,
+      "hero_layout": {
+        "position": [
+          0.58,
+          -1.1
+        ],
+        "scale": 1.3,
+        "yaw_degrees": 0.0
+      },
+      "render_pose_grounding": null,
+      "source_supported_eye": null,
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/cat.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 7164,
+        "partition_candidate_strands": 310000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "root_body_distance_p50_source": 0.0012395742232911289,
+        "root_body_distance_p95_source": 0.004176737833768129,
+        "selected_strands_after_filter": 310000,
+        "selected_strands_before_filter": 310000,
+        "source_strands_after_filter": 310000,
+        "source_vertices": 31000000,
+        "total_strands": 310000
+      },
+      "transform": {
+        "body_bounds_max": [
+          0.7431997060775757,
+          0.17948895692825317,
+          1.2979199886322021
+        ],
+        "body_bounds_min": [
+          -0.7431997060775757,
+          -0.17948895692825317,
+          0.0
+        ],
+        "center_xy": [
+          -0.02851015329360962,
+          -0.00010754913091659546
+        ],
+        "floor_z": -0.006725899875164032,
+        "scale": 2.0622180497523788,
+        "target_height": 1.2979200000000002
+      }
+    },
+    "fox": {
+      "body_faces": 158682,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/fox.ply",
+      "body_vertices": 79343,
+      "hero_layout": {
+        "position": [
+          -1.72,
+          -1.0
+        ],
+        "scale": 1.18,
+        "yaw_degrees": 185.0
+      },
+      "render_pose_grounding": null,
+      "source_supported_eye": null,
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/fox.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 5100,
+        "partition_candidate_strands": 265000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "root_body_distance_p50_source": 0.0010513459565117955,
+        "root_body_distance_p95_source": 0.0020789143862202765,
+        "selected_strands_after_filter": 265000,
+        "selected_strands_before_filter": 265000,
+        "source_strands_after_filter": 265000,
+        "source_vertices": 26500000,
+        "total_strands": 265000
+      },
+      "transform": {
+        "body_bounds_max": [
+          1.3402098417282104,
+          0.2713516354560852,
+          1.2755799293518066
+        ],
+        "body_bounds_min": [
+          -1.3402098417282104,
+          -0.2713516354560852,
+          0.0
+        ],
+        "center_xy": [
+          0.10949848592281342,
+          -0.00010519847273826599
+        ],
+        "floor_z": -0.004469600040465593,
+        "scale": 2.8544159724405573,
+        "target_height": 1.27558
+      }
+    },
+    "panda": {
+      "body_faces": 680572,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/panda.ply",
+      "body_vertices": 340288,
+      "hero_layout": {
+        "position": [
+          3.92,
+          0.05
+        ],
+        "scale": 0.9,
+        "yaw_degrees": 25.0
+      },
+      "render_pose_grounding": null,
+      "source_supported_eye": null,
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/panda.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 1755,
+        "partition_candidate_strands": 220000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "root_body_distance_p50_source": 0.0014350349083542824,
+        "root_body_distance_p95_source": 0.002799842017702758,
+        "selected_strands_after_filter": 220000,
+        "selected_strands_before_filter": 220000,
+        "source_strands_after_filter": 220000,
+        "source_vertices": 22000000,
+        "total_strands": 220000
+      },
+      "transform": {
+        "body_bounds_max": [
+          0.9715238809585571,
+          0.3553059995174408,
+          1.1692800521850586
+        ],
+        "body_bounds_min": [
+          -0.9715238809585571,
+          -0.3553059995174408,
+          0.0
+        ],
+        "center_xy": [
+          -0.21125537157058716,
+          -0.010889112949371338
+        ],
+        "floor_z": -0.33058276772499084,
+        "scale": 1.261210434897997,
+        "target_height": 1.16928
+      }
+    },
+    "tiger": {
+      "body_faces": 159997,
+      "body_path": "/mnt/data0/prakhar/Frosting/0_data/body/whitetiger.ply",
+      "body_vertices": 80007,
+      "hero_layout": {
+        "position": [
+          -4.48,
+          0.15
+        ],
+        "scale": 0.96,
+        "yaw_degrees": -15.0
+      },
+      "render_pose_grounding": null,
+      "source_supported_eye": null,
+      "strand_path": "/mnt/data0/prakhar/Frosting/0_data/strand_files/tiger.ply",
+      "strand_stats": {
+        "control_points": 12,
+        "display_density_multiplier": 1,
+        "display_interpolated_strands": 0,
+        "endpoint_flips": 10659,
+        "partition_candidate_strands": 265000,
+        "partition_count": 1,
+        "partition_id": 0,
+        "root_body_distance_p50_source": 0.0034737237729132175,
+        "root_body_distance_p95_source": 0.005864296946674585,
+        "selected_strands_after_filter": 265000,
+        "selected_strands_before_filter": 265000,
+        "source_strands_after_filter": 265000,
+        "source_vertices": 26500000,
+        "total_strands": 265000
+      },
+      "transform": {
+        "body_bounds_max": [
+          1.3136584758758545,
+          0.23800228536128998,
+          1.290239930152893
+        ],
+        "body_bounds_min": [
+          -1.3136584758758545,
+          -0.23800228536128998,
+          0.0
+        ],
+        "center_xy": [
+          -0.005922913551330566,
+          -0.001386299729347229
+        ],
+        "floor_z": 0.03322580084204674,
+        "scale": 1.1791584746540662,
+        "target_height": 1.29024
+      }
+    }
+  },
+  "config": {
+    "animals": "all",
+    "bison_color_npz": "/mnt/data0/prakhar/Frosting/1_paper_vis/bison_multiview_body_texture_v02/bison_body_multiview_colors.npz",
+    "bison_density_multiplier": 1,
+    "bison_tip_spread": 0.0032,
+    "bison_uniform_color": true,
+    "bison_uniform_srgb": [
+      95,
+      63,
+      53
+    ],
+    "body_dir": "/mnt/data0/prakhar/Frosting/0_data/body",
+    "camera_orbit_degrees": 10.0,
+    "color_depth": 16,
+    "color_mode": "legacy",
+    "control_points": 12,
+    "device": "GPU",
+    "disable_denoising": true,
+    "fps": 24,
+    "frame_end": 288,
+    "frame_start": 1,
+    "hero_cat_scale": null,
+    "hero_cat_x": null,
+    "hero_cat_y": null,
+    "hero_cat_yaw": null,
+    "hero_config": "1_paper_vis/0_teaser/configs/fur_pair_inward_balanced_v8c_equal_gaps.json",
+    "hero_fox_x": null,
+    "holdout_occluders": false,
+    "layer": "full",
+    "layout": "hero",
+    "mode": "still",
+    "output_dir": "1_paper_vis/0_teaser/final_fur_focus_upclose_balanced_v03",
+    "points_per_strand": 100,
+    "required_gpu_count": 4,
+    "resolution_x": 5120,
+    "resolution_y": 2160,
+    "samples": 2048,
+    "save_blend": true,
+    "seed": 73,
+    "setup_only": false,
+    "strand_dir": "/mnt/data0/prakhar/Frosting/0_data/strand_files",
+    "strand_limit": -1,
+    "strand_partition_count": 1,
+    "strand_partition_id": 0,
+    "style": "luxury",
+    "total_frames": 288,
+    "transparent": false,
+    "wind_sway_ratio": 0.46,
+    "worker_id": 0
+  },
+  "enabled_devices": [
+    {
+      "name": "NVIDIA RTX A5000",
+      "type": "OPTIX"
+    },
+    {
+      "name": "NVIDIA RTX A5000",
+      "type": "OPTIX"
+    },
+    {
+      "name": "NVIDIA RTX A5000",
+      "type": "OPTIX"
+    },
+    {
+      "name": "NVIDIA RTX A5000",
+      "type": "OPTIX"
+    }
+  ],
+  "wind_model": {
+    "motion_blur": false,
+    "name": "root_pinned_quasi_static_crossflow",
+    "root_positions_fixed": true,
+    "segment_lengths_preserved": true
+  }
+}

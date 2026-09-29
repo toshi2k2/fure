@@ -1,0 +1,51 @@
+{
+  "name": "beagle",
+  "url": "assets/models/beagle.bin",
+  "bytes": 5400108,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90030,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360120,
+      "length": 179997,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080108,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 100000,
+  "sourceBodyFaces": 159999,
+  "previewBodyFaces": 59999,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.32843929529190063,
+    0.17259778082370758,
+    0.06057470291852951
+  ],
+  "bounds": [
+    [
+      -1.4053045511245728,
+      -1.0328104496002197,
+      -0.4534980356693268
+    ],
+    [
+      1.4118210077285767,
+      1.0328104496002197,
+      0.45357662439346313
+    ]
+  ],
+  "sha256": "8bd2eb16577f31b2aae3b1f8fd360b571dc9f8c13e5e227566ccccadf5bccb56",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}

@@ -1,0 +1,51 @@
+{
+  "name": "bison",
+  "url": "assets/models/bison.bin",
+  "bytes": 5109624,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 65802,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 263208,
+      "length": 131604,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 789624,
+      "length": 1080000,
+      "type": "<f4"
+    }
+  },
+  "pointsPerStrand": 12,
+  "previewStrands": 30000,
+  "sourceStrands": 104993,
+  "sourceBodyFaces": 43868,
+  "previewBodyFaces": 43868,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.11443538218736649,
+    0.04970656335353851,
+    0.03560131415724754
+  ],
+  "bounds": [
+    [
+      -1.399999976158142,
+      -0.8760981559753418,
+      -0.7133913636207581
+    ],
+    [
+      1.399999976158142,
+      0.908072292804718,
+      0.6834140419960022
+    ]
+  ],
+  "sha256": "c7e25cbef9d89452a0584159c5ddadf7cfe8aa25094ee2b1a0ccdc99b4707d47",
+  "note": "Existing curves sampled without interpolation; body/strands share the same coordinate transform."
+}
