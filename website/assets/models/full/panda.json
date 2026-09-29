@@ -1,0 +1,54 @@
+{
+  "name": "panda",
+  "url": "assets/models/full/panda.bin",
+  "bytes": 32760024,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90006,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360024,
+      "length": 180000,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080024,
+      "length": 7920000,
+      "type": "<f4"
+    }
+  },
+  "density": "full",
+  "strandCount": 220000,
+  "pointsPerStrand": 12,
+  "previewStrands": 220000,
+  "sourceStrands": 220000,
+  "sourceBodyFaces": 680572,
+  "previewBodyFaces": 60000,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.40752553939819336,
+    0.38681885600090027,
+    0.3013186752796173
+  ],
+  "bounds": [
+    [
+      -1.413232684135437,
+      -0.9140971302986145,
+      -0.9007090926170349
+    ],
+    [
+      1.474980115890503,
+      0.9463772177696228,
+      0.9567626714706421
+    ]
+  ],
+  "sha256": "2daa39b22a568ca87e33dc3434b172b9b2170e1c7eec84214f89c95e3ab5fea8",
+  "note": "All original teaser curves, in source order; no interpolation. Body remains simplified; body/strands share the same coordinate transform.",
+  "previewCorrespondence": "Body and all sampled preview control points are byte-identical."
+}

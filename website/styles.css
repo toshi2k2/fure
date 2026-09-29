@@ -633,6 +633,30 @@ sup {
 #geometry-controls button[aria-pressed="true"] {
   border-color: #d2c0a1;
 }
+#density-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.density-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.density-buttons button {
+  padding: 9px 12px;
+  border: 1px solid #78766d;
+  border-radius: 3px;
+}
+.density-buttons button[aria-pressed="true"] {
+  background: #272a25;
+  color: white;
+  border-color: #272a25;
+}
 .method {
   padding: 80px 0 96px;
   border-top: 1px solid var(--line);

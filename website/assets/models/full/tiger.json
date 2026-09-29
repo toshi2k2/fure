@@ -1,0 +1,54 @@
+{
+  "name": "tiger",
+  "url": "assets/models/full/tiger.bin",
+  "bytes": 39240084,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90024,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360096,
+      "length": 179997,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080084,
+      "length": 9540000,
+      "type": "<f4"
+    }
+  },
+  "density": "full",
+  "strandCount": 265000,
+  "pointsPerStrand": 12,
+  "previewStrands": 265000,
+  "sourceStrands": 265000,
+  "sourceBodyFaces": 159997,
+  "previewBodyFaces": 59999,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.45084184408187866,
+    0.19917427003383636,
+    0.03913004696369171
+  ],
+  "bounds": [
+    [
+      -1.4550395011901855,
+      -0.708187997341156,
+      -0.5035779476165771
+    ],
+    [
+      1.4070218801498413,
+      0.7445011138916016,
+      0.5303806662559509
+    ]
+  ],
+  "sha256": "4f53cd02830a8ac7e1e19a66c255d6814a54e6087341bf1cca71d4588c06751c",
+  "note": "All original teaser curves, in source order; no interpolation. Body remains simplified; body/strands share the same coordinate transform.",
+  "previewCorrespondence": "Body and all sampled preview control points are byte-identical."
+}

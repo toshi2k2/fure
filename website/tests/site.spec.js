@@ -216,6 +216,155 @@ test("failed 3D download keeps the full-density studio view usable", async ({
   await expect(page.locator("#animal-image")).toBeVisible();
 });
 
+test("full-density assets retain every source strand and the identical preview body", async () => {
+  const { createHash } = await import("node:crypto");
+  for (const animal of site.animals) {
+    const metadata = JSON.parse(
+      await readFile(`assets/models/full/${animal.id}.json`),
+    );
+    const preview = JSON.parse(
+      await readFile(`assets/models/${animal.id}.json`),
+    );
+    const bytes = await readFile(metadata.url);
+    const previewBytes = await readFile(preview.url);
+    expect(bytes.length).toBe(metadata.bytes);
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(
+      metadata.sha256,
+    );
+    expect(metadata.strandCount).toBe(animal.strands);
+    expect(metadata.strandCount).toBe(metadata.sourceStrands);
+    expect(metadata.layout.strandPositions.length).toBe(
+      animal.strands * 12 * 3,
+    );
+    expect(metadata.previewCorrespondence).toContain("byte-identical");
+    for (const key of ["bodyPositions", "bodyIndices"]) {
+      const a = metadata.layout[key],
+        b = preview.layout[key];
+      expect(
+        bytes
+          .subarray(a.offset, a.offset + a.length * 4)
+          .equals(previewBytes.subarray(b.offset, b.offset + b.length * 4)),
+      ).toBe(true);
+    }
+    const spec = metadata.layout.strandPositions;
+    const positions = new Float32Array(
+      bytes.buffer,
+      bytes.byteOffset + spec.offset,
+      spec.length,
+    );
+    expect(positions.every(Number.isFinite)).toBe(true);
+    for (let axis = 0; axis < 3; axis++) {
+      expect(
+        positions.every(
+          (v, i) =>
+            i % 3 !== axis ||
+            (v >= metadata.bounds[0][axis] && v <= metadata.bounds[1][axis]),
+        ),
+      ).toBe(true);
+    }
+  }
+});
+
+test("all six animals load full density only on request and release geometry on exit", async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const errors = [],
+    requests = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => requests.push(request.url()));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.locator("#interactive-mode").click();
+  const viewer = page.locator("#webgl-viewer");
+  await expect(viewer).toHaveAttribute("data-density", "preview", {
+    timeout: 30000,
+  });
+  expect(requests.some((url) => url.includes("/models/full/"))).toBe(false);
+  await page.locator("#full-density").click();
+  await mkdir(".build/screenshots/full-density", { recursive: true });
+  const timings = [];
+  for (const animal of site.animals) {
+    const start = Date.now();
+    if (animal.id !== "cat") await page.locator(`#tab-${animal.id}`).click();
+    await expect(viewer).toHaveAttribute("data-loaded-animal", animal.id, {
+      timeout: 30000,
+    });
+    await expect(viewer).toHaveAttribute("data-density", "full");
+    await expect(viewer).toHaveAttribute(
+      "data-strand-count",
+      String(animal.strands),
+    );
+    await expect(page.locator("#viewer-note")).toContainText(
+      `${animal.strands.toLocaleString()} original strands`,
+    );
+    timings.push({
+      animal: animal.id,
+      localLoadAndRenderMs: Date.now() - start,
+    });
+    await page
+      .locator("#collection")
+      .screenshot({ path: `.build/screenshots/full-density/${animal.id}.png` });
+  }
+  await page.locator("#show-strands").click();
+  await page
+    .locator("#collection")
+    .screenshot({
+      path: ".build/screenshots/full-density/bison-body-only.png",
+    });
+  await page.locator("#preview-density").click();
+  await expect(viewer).toHaveAttribute("data-strand-count", "30000", {
+    timeout: 30000,
+  });
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.locator("#full-density")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.locator("#studio-mode").click();
+  await expect(viewer).not.toHaveAttribute("data-loaded-animal");
+  expect(errors).toEqual([]);
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(
+    ".build/screenshots/full-density/timings.json",
+    JSON.stringify(timings, null, 2),
+  );
+});
+
+test("a pending full-density request can be cancelled without stale geometry", async ({
+  page,
+}) => {
+  let release;
+  const hold = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/models/full/cat.bin", async (route) => {
+    await hold;
+    await route.abort();
+  });
+  await page.goto("/");
+  await page.locator("#interactive-mode").click();
+  await expect(page.locator("#webgl-viewer")).toHaveAttribute(
+    "data-density",
+    "preview",
+  );
+  const pending = page.waitForRequest("**/models/full/cat.bin");
+  await page.locator("#full-density").click();
+  await pending;
+  await page.locator("#preview-density").click();
+  release();
+  await expect(page.locator("#webgl-viewer")).toHaveAttribute(
+    "data-density",
+    "preview",
+    { timeout: 30000 },
+  );
+  await expect(page.locator("#viewer-note")).toContainText(
+    "30,000 sampled strands",
+  );
+});
+
 test("native 4K film plays and local server supports seeking", async ({
   page,
   request,

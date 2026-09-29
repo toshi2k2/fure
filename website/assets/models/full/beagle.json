@@ -1,0 +1,54 @@
+{
+  "name": "beagle",
+  "url": "assets/models/full/beagle.bin",
+  "bytes": 15480108,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90030,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360120,
+      "length": 179997,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080108,
+      "length": 3600000,
+      "type": "<f4"
+    }
+  },
+  "density": "full",
+  "strandCount": 100000,
+  "pointsPerStrand": 12,
+  "previewStrands": 100000,
+  "sourceStrands": 100000,
+  "sourceBodyFaces": 159999,
+  "previewBodyFaces": 59999,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.32843929529190063,
+    0.17259778082370758,
+    0.06057470291852951
+  ],
+  "bounds": [
+    [
+      -1.4055367708206177,
+      -1.0328104496002197,
+      -0.45446208119392395
+    ],
+    [
+      1.4118210077285767,
+      1.0328104496002197,
+      0.45491600036621094
+    ]
+  ],
+  "sha256": "6df9b0a42bc87f63bbe23bcbb8f51c4465402428d92d2278f601c3b5e3ee78cd",
+  "note": "All original teaser curves, in source order; no interpolation. Body remains simplified; body/strands share the same coordinate transform.",
+  "previewCorrespondence": "Body and all sampled preview control points are byte-identical."
+}

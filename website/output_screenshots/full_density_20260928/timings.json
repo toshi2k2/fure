@@ -1,0 +1,26 @@
+[
+  {
+    "animal": "cat",
+    "localLoadAndRenderMs": 1719
+  },
+  {
+    "animal": "fox",
+    "localLoadAndRenderMs": 4094
+  },
+  {
+    "animal": "tiger",
+    "localLoadAndRenderMs": 3724
+  },
+  {
+    "animal": "beagle",
+    "localLoadAndRenderMs": 1636
+  },
+  {
+    "animal": "panda",
+    "localLoadAndRenderMs": 3217
+  },
+  {
+    "animal": "bison",
+    "localLoadAndRenderMs": 1612
+  }
+]

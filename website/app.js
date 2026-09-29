@@ -72,6 +72,7 @@ if ("IntersectionObserver" in window && !reducedMotion.matches) {
 
 let selected = site.animals[0];
 let mode = "studio";
+let density = "preview";
 let viewer = null;
 let viewerPromise = null;
 let requestId = 0;
@@ -88,6 +89,8 @@ async function setMode(nextMode) {
     String(mode === "interactive"),
   );
   $("viewer-loading").hidden = true;
+  $("density-controls").hidden = mode !== "interactive";
+  $("geometry-controls").hidden = true;
   if (mode === "studio") {
     viewer?.cancel();
     $("webgl-viewer").hidden = true;
@@ -97,7 +100,10 @@ async function setMode(nextMode) {
       "Full-density render · original teaser palette";
     return;
   }
-  $("viewer-loading").textContent = "Loading the 3D preview…";
+  $("viewer-loading").textContent =
+    density === "full"
+      ? "Loading all original strands…"
+      : "Loading the 3D preview…";
   $("viewer-loading").hidden = false;
   try {
     if (!viewerPromise)
@@ -108,12 +114,20 @@ async function setMode(nextMode) {
     if (token !== requestId) return;
     $("webgl-viewer").hidden = false;
     $("animal-image").hidden = true;
-    const metadata = await viewer.load(selected.id);
+    const metadata = await viewer.load(
+      selected.id,
+      density,
+      (received, total) => {
+        if (token !== requestId) return;
+        $("viewer-loading").textContent =
+          `${density === "full" ? "Full density" : "Preview"}: ${(received / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB`;
+      },
+    );
     if (token !== requestId) return;
     $("viewer-loading").hidden = true;
     $("geometry-controls").hidden = false;
     $("viewer-note").textContent =
-      `${metadata.previewStrands.toLocaleString()} sampled strands · drag to orbit / pinch to zoom`;
+      `${(metadata.strandCount ?? metadata.previewStrands).toLocaleString()} ${density === "full" ? "original" : "sampled"} strands · drag to orbit / pinch to zoom`;
     $("show-body").setAttribute("aria-pressed", "true");
     $("show-strands").setAttribute("aria-pressed", "true");
   } catch (error) {
@@ -165,6 +179,17 @@ tabs.forEach((tab, index) => {
 });
 studioButton.addEventListener("click", () => setMode("studio"));
 interactiveButton.addEventListener("click", () => setMode("interactive"));
+for (const value of ["preview", "full"])
+  $(value + "-density").addEventListener("click", () => {
+    if (density === value) return;
+    density = value;
+    for (const option of ["preview", "full"])
+      $(option + "-density").setAttribute(
+        "aria-pressed",
+        String(option === density),
+      );
+    setMode("interactive");
+  });
 for (const key of ["body", "strands"])
   $("show-" + key).addEventListener("click", (event) => {
     const button = event.currentTarget;

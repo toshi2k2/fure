@@ -76,6 +76,29 @@ counts, layout, bounds, transforms' convention and SHA-256 hashes; `.bin` files
 contain little-endian float32 positions and uint32 triangle indices. Simple
 WebGL lines are for inspecting geometry, not reproducing Cycles hair shading.
 
+### Full-Density Interactive Mode
+
+Select **Explore 3D**, then **Full density · all strands**. This loads every
+original teaser-scene curve (the counts above), not interpolated filler strands.
+The same simplified body and 12 control points per strand are retained. The
+exporter checks that the body and sampled preview curves are byte-identical
+between modes. Full assets live separately in `assets/models/full/`; previews
+and research assets are unchanged.
+
+Downloads are roughly 15–44 MB per animal, on demand only. Progress is shown;
+switching density, animal, or returning to Studio cancels the current download.
+Only one animal's geometry is retained by the viewer at a time, with GPU buffers
+disposed on replacement/exit. Density switches preserve the current camera.
+Desktop hardware is recommended; Preview remains available for slower devices.
+Full density is a geometry setting, not Blender/Cycles hair shading or lighting.
+
+To regenerate full assets (refuses to overwrite existing full exports):
+
+```sh
+blender -b /path/to/animal_showcase_scene.blend -t 8 \
+  --python scripts/export_teaser_assets.py -- --mode full-models --output assets/models/full
+```
+
 The film is the existing **strong-gust, fixed-camera, all-strand fox simulation**:
 
 ```
@@ -93,8 +116,10 @@ The motion is downstream simulation, not motion inferred from the photographs.
 
 ## Tests And Screenshots
 
-Validated 2026-09-28: production build and all 11 Chromium tests pass. Reviewed
+Validated 2026-09-28: production build and all 14 Chromium tests pass. Reviewed
 desktop/mobile screenshots are in [output_screenshots/20260928/](output_screenshots/20260928/summary.md).
+Full-density screenshots, exact download sizes and validation notes are in
+[output_screenshots/full_density_20260928/](output_screenshots/full_density_20260928/summary.md).
 
 ```sh
 PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npx playwright install chromium

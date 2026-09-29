@@ -25,6 +25,8 @@ for (const animal of ["cat", "fox", "tiger", "beagle", "panda", "bison"])
     `assets/images/${animal}.webp`,
     `assets/models/${animal}.bin`,
     `assets/models/${animal}.json`,
+    `assets/models/full/${animal}.bin`,
+    `assets/models/full/${animal}.json`,
   );
 for (const file of required) {
   try {

@@ -5,7 +5,7 @@ export function createViewer(container) {
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: false,
-    powerPreference: "low-power",
+    powerPreference: "high-performance",
   });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
   renderer.setClearColor(0x080909);
@@ -56,8 +56,13 @@ export function createViewer(container) {
       object.material.dispose();
       group.remove(object);
     }
+    body = strands = undefined;
+    delete container.dataset.loadedAnimal;
+    delete container.dataset.density;
+    delete container.dataset.strandCount;
   }
   function reset() {
+    if (!info) return;
     const aspect = container.clientWidth / Math.max(1, container.clientHeight);
     // Preview coordinates preserve the approved pose, with world Y as vertical.
     const low = new THREE.Vector3(...info.bounds[0]);
@@ -79,22 +84,49 @@ export function createViewer(container) {
   return {
     cancel() {
       controller?.abort();
+      clear();
+      info = undefined;
+      renderer.renderLists.dispose();
     },
-    async load(id) {
+    async load(id, density = "preview", onProgress = () => {}) {
+      if (!["preview", "full"].includes(density))
+        throw new Error("Invalid density");
       controller?.abort();
+      const preserveView = container.dataset.loadedAnimal === id;
+      // Release the previous animal before allocating a full-density download.
+      clear();
+      info = undefined;
+      renderer.renderLists.dispose();
       const current = new AbortController();
       controller = current;
-      const response = await fetch(`assets/models/${id}.json`, {
-        signal: current.signal,
-      });
+      const response = await fetch(
+        `assets/models/${density === "full" ? "full/" : ""}${id}.json`,
+        {
+          signal: current.signal,
+        },
+      );
       if (!response.ok) throw new Error(`Missing ${id} model metadata`);
       const metadata = await response.json();
       const binary = await fetch(metadata.url, { signal: current.signal });
       if (!binary.ok) throw new Error(`Missing ${id} geometry`);
-      const buffer = await binary.arrayBuffer();
+      const buffer = new ArrayBuffer(metadata.bytes);
+      const destination = new Uint8Array(buffer);
+      const reader = binary.body.getReader();
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (received + value.length > destination.length) {
+          current.abort();
+          throw new Error("Unexpected geometry size");
+        }
+        destination.set(value, received);
+        received += value.length;
+        onProgress(received, metadata.bytes);
+      }
       if (current.signal.aborted)
         throw new DOMException("Aborted", "AbortError");
-      if (buffer.byteLength !== metadata.bytes)
+      if (received !== metadata.bytes)
         throw new Error("Incomplete geometry download");
       const view = (name, Type) =>
         new Type(
@@ -126,11 +158,12 @@ export function createViewer(container) {
       const positions = view("strandPositions", Float32Array);
       hair.setAttribute("position", new THREE.BufferAttribute(positions, 3));
       const points = metadata.pointsPerStrand;
-      const indices = new Uint32Array(
-        metadata.previewStrands * (points - 1) * 2,
-      );
+      const count = metadata.strandCount ?? metadata.previewStrands;
+      if (positions.length !== count * points * 3)
+        throw new Error("Strand layout mismatch");
+      const indices = new Uint32Array(count * (points - 1) * 2);
       let write = 0;
-      for (let i = 0; i < metadata.previewStrands; i++)
+      for (let i = 0; i < count; i++)
         for (let j = 0; j < points - 1; j++) {
           indices[write++] = i * points + j;
           indices[write++] = i * points + j + 1;
@@ -145,7 +178,9 @@ export function createViewer(container) {
       );
       group.add(strands);
       container.dataset.loadedAnimal = id;
-      reset();
+      container.dataset.density = density;
+      container.dataset.strandCount = String(positions.length / (points * 3));
+      if (!preserveView) reset();
       render();
       return metadata;
     },

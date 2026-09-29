@@ -31,7 +31,10 @@ def transformed(points, matrix):
     return points @ a[:3, :3].T + a[:3, 3]
 
 
-def export_model(name: str, folder: Path, limit: int) -> dict:
+def export_model(name: str, folder: Path, limit: int | None) -> dict:
+    """Export aligned geometry; None retains every curve in source order."""
+    if limit is None and ((folder / f"{name}.bin").exists() or (folder / f"{name}.json").exists()):
+        raise FileExistsError(f"Refusing to overwrite full-density asset: {name}")
     body = bpy.data.objects[name + "_body"]
     fur = bpy.data.objects[name + "_strands"]
     data = fur.data
@@ -43,7 +46,8 @@ def export_model(name: str, folder: Path, limit: int) -> dict:
     counts = np.diff(offsets)
     assert counts.min() == counts.max(), "Expected uniform teaser control points"
     curves = positions.reshape(len(counts), int(counts[0]), 3)
-    ids = np.sort(np.random.default_rng(73).choice(len(curves), min(limit, len(curves)), replace=False))
+    ids = (np.arange(len(curves)) if limit is None else
+           np.sort(np.random.default_rng(73).choice(len(curves), min(limit, len(curves)), replace=False)))
     sampled = transformed(curves[ids].reshape(-1, 3), fur.matrix_world)
     duplicate = body.copy()
     duplicate.data = body.data.copy()
@@ -75,13 +79,29 @@ def export_model(name: str, folder: Path, limit: int) -> dict:
     target = folder / f"{name}.bin"
     with target.open("wb") as handle:
         handle.write(b"".join(binary))
-    record = dict(name=name, url=f"assets/models/{name}.bin", bytes=offset, layout=layout,
+    prefix = "assets/models/full" if limit is None else "assets/models"
+    record = dict(name=name, url=f"{prefix}/{name}.bin", bytes=offset, layout=layout,
+                  density="full" if limit is None else "preview", strandCount=len(ids),
                   pointsPerStrand=int(counts[0]), previewStrands=len(ids), sourceStrands=len(curves),
                   sourceBodyFaces=len(body.data.polygons), previewBodyFaces=len(faces)//3,
                   bodyColor=material_color(body.active_material), hairColor=material_color(fur.active_material),
                   bounds=[np.minimum(verts.min(0), sampled.min(0)).tolist(), np.maximum(verts.max(0), sampled.max(0)).tolist()],
                   sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
-                  note="Existing curves sampled without interpolation; body/strands share the same coordinate transform.")
+                  note=("All original teaser curves, in source order; no interpolation. " if limit is None else "Existing curves sampled without interpolation. ") +
+                       "Body remains simplified; body/strands share the same coordinate transform.")
+    if limit is None:
+        # Fail if regeneration changes the established body/fur coordinate system.
+        preview = json.loads((folder.parent / f"{name}.json").read_text())
+        source = folder.parent / f"{name}.bin"
+        for key in ("bodyPositions", "bodyIndices", "strandPositions"):
+            spec = preview["layout"][key]
+            old = np.fromfile(source, dtype=spec["type"], count=spec["length"], offset=spec["offset"])
+            current = primitives[key]
+            if key == "strandPositions":
+                selected = np.sort(np.random.default_rng(73).choice(len(curves), preview["previewStrands"], replace=False))
+                current = current.reshape(len(curves), int(counts[0]), 3)[selected].reshape(-1)
+            assert np.array_equal(old, current), f"Preview/full alignment mismatch: {name}/{key}"
+        record["previewCorrespondence"] = "Body and all sampled preview control points are byte-identical."
     (folder / f"{name}.json").write_text(json.dumps(record, indent=2))
     evaluated.to_mesh_clear()
     bpy.data.objects.remove(duplicate, do_unlink=True)
@@ -124,14 +144,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--animals", nargs="+", default=["cat", "fox", "tiger", "beagle", "panda", "bison"])
-    parser.add_argument("--mode", choices=("models", "renders"), default="models")
+    parser.add_argument("--mode", choices=("models", "full-models", "renders"), default="models")
     parser.add_argument("--samples", type=int, default=128)
     args = parser.parse_args(sys.argv[sys.argv.index("--")+1:])
     args.output.mkdir(parents=True, exist_ok=True)
     direction = (bpy.context.scene.camera.location - Vector((0, 0, .8))).normalized()
     for name in args.animals:
-        if args.mode == "models":
-            export_model(name, args.output, 30000)
+        if args.mode in ("models", "full-models"):
+            export_model(name, args.output, None if args.mode == "full-models" else 30000)
         else:
             render_animal(name, args.output / f"{name}.png", args.samples, direction)
 

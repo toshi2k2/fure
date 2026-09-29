@@ -296,6 +296,21 @@
               ><button type="button" id="reset-view">Reset view ↺</button>
             </div>
           </div>
+          <div id="density-controls" hidden>
+            <div
+              class="density-buttons"
+              role="group"
+              aria-label="Strand density"
+            >
+              <button id="preview-density" type="button" aria-pressed="true">
+                Preview · 30k
+              </button>
+              <button id="full-density" type="button" aria-pressed="false">
+                Full density · all strands
+              </button>
+            </div>
+            <span>Full density: 15–44 MB per animal. Desktop recommended.</span>
+          </div>
           <div class="animal-info">
             <div>
               <p class="eyebrow" id="animal-source">Artemis</p>
@@ -313,8 +328,10 @@
         </div>
         <p class="fine-print">
           Studio images retain all source strands, with the approved
-          illustrative teaser colors. Interactive views load a lighter sample of
-          the same geometry, not a new reconstruction.
+          illustrative teaser colors. Explore 3D starts with a lightweight
+          sample; full density loads every original teaser strand, without
+          interpolation. The body stays simplified. Browser lines do not
+          reproduce studio hair shading.
         </p>
       </section>
 

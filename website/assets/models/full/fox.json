@@ -1,0 +1,54 @@
+{
+  "name": "fox",
+  "url": "assets/models/full/fox.bin",
+  "bytes": 39240024,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90006,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360024,
+      "length": 180000,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1080024,
+      "length": 9540000,
+      "type": "<f4"
+    }
+  },
+  "density": "full",
+  "strandCount": 265000,
+  "pointsPerStrand": 12,
+  "previewStrands": 265000,
+  "sourceStrands": 265000,
+  "sourceBodyFaces": 158682,
+  "previewBodyFaces": 60000,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.5086106061935425,
+    0.06057470291852951,
+    0.006941255182027817
+  ],
+  "bounds": [
+    [
+      -1.4935706853866577,
+      -0.668999969959259,
+      -0.34106892347335815
+    ],
+    [
+      1.399999976158142,
+      0.6734343767166138,
+      0.3650747835636139
+    ]
+  ],
+  "sha256": "3a784930c876709950b0b3494c22a527f46cc08be5e82ba8fc2218b6c1821c9e",
+  "note": "All original teaser curves, in source order; no interpolation. Body remains simplified; body/strands share the same coordinate transform.",
+  "previewCorrespondence": "Body and all sampled preview control points are byte-identical."
+}

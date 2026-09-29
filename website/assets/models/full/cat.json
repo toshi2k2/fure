@@ -1,0 +1,54 @@
+{
+  "name": "cat",
+  "url": "assets/models/full/cat.bin",
+  "bytes": 45719988,
+  "layout": {
+    "bodyPositions": {
+      "offset": 0,
+      "length": 90003,
+      "type": "<f4"
+    },
+    "bodyIndices": {
+      "offset": 360012,
+      "length": 179994,
+      "type": "<u4"
+    },
+    "strandPositions": {
+      "offset": 1079988,
+      "length": 11160000,
+      "type": "<f4"
+    }
+  },
+  "density": "full",
+  "strandCount": 310000,
+  "pointsPerStrand": 12,
+  "previewStrands": 310000,
+  "sourceStrands": 310000,
+  "sourceBodyFaces": 148794,
+  "previewBodyFaces": 59998,
+  "bodyColor": [
+    0.18000000715255737,
+    0.07999999821186066,
+    0.03999999910593033
+  ],
+  "hairColor": [
+    0.40752553939819336,
+    0.21330136060714722,
+    0.09200630336999893
+  ],
+  "bounds": [
+    [
+      -1.4249054193496704,
+      -1.2417670488357544,
+      -0.40379589796066284
+    ],
+    [
+      1.4350756406784058,
+      1.3530768156051636,
+      0.4065890312194824
+    ]
+  ],
+  "sha256": "86ba304c587218d84467da4bad2a2f71cba5d03ed54c52fac87100298db252c9",
+  "note": "All original teaser curves, in source order; no interpolation. Body remains simplified; body/strands share the same coordinate transform.",
+  "previewCorrespondence": "Body and all sampled preview control points are byte-identical."
+}
