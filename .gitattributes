@@ -1,0 +1,8 @@
+* text=auto
+*.patch text eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.pt binary
+*.npz binary
+*.npy binary

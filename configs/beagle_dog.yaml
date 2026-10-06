@@ -1,0 +1,50 @@
+schema_version: 1
+animal: beagle_dog
+outer_source: Existing NeuS2 3D model
+outer_mesh: ../data/beagle_dog/outer.obj
+annotation_mesh: ../data/beagle_dog/annotation_mesh.obj
+annotations: ../data/beagle_dog/parts.json
+shell_stats: ../data/beagle_dog/shell_stats.npz
+views: ../data/beagle_dog/views
+eyes: ../data/beagle_dog/eyes.ply
+cm_per_scene_unit: 125.97526705669415
+eye_distance_cm: 5.0
+scale_basis: Historical 5.0 cm inter-eye assumption applied to the landmarks; not a physical measurement
+annotation_origin: transferred from the segmented 3D model
+part_labels_approved: true
+smoothness: 8
+sdf_resolution: 64
+semantic_prior:
+  length_cm:
+    belly: 1.3
+    body: 1.4
+    ears: 1.1
+    eyes: 0.0
+    face: 0.6
+    front_paws: 0.4
+    inner_earcanal: 0.0
+    leg_front: 1.2
+    leg_rear: 1.2
+    neck: 1.4
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.4
+    tail: 1.0
+    under_tail: 0.8
+  thickness_cm:
+    belly: 0.36
+    body: 0.4
+    ears: 0.3
+    eyes: 0.0
+    face: 0.16
+    front_paws: 0.1
+    inner_earcanal: 0.0
+    leg_front: 0.32
+    leg_rear: 0.32
+    neck: 0.4
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.1
+    tail: 0.28
+    under_tail: 0.22
+  basis: Initial values used in the original project; not physical measurements

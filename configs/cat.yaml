@@ -1,0 +1,48 @@
+schema_version: 1
+animal: cat
+outer_source: Existing NeuS2 3D model
+outer_mesh: ../data/cat/outer.obj
+annotation_mesh: ../data/cat/annotation_mesh.obj
+annotations: ../data/cat/parts.json
+shell_stats: ../data/cat/shell_stats.npz
+views: ../data/cat/views
+eyes: ../data/cat/eyes.ply
+cm_per_scene_unit: 73.29997827385934
+eye_distance_cm: 3.5
+scale_basis: Historical 3.5 cm inter-eye assumption applied to the landmarks; not a physical measurement
+annotation_origin: transferred from the segmented 3D model
+part_labels_approved: true
+smoothness: 8
+sdf_resolution: 64
+semantic_prior:
+  length_cm:
+    belly: 2.0
+    body: 1.5
+    ears: 0.8
+    eyes: 0.0
+    face: 0.8
+    inner_earcanal: 0.0
+    leg_front: 1.2
+    leg_rear: 1.2
+    neck: 1.6
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.5
+    tail: 1.8
+    under_tail: 1.4
+  thickness_cm:
+    belly: 0.5
+    body: 0.4
+    ears: 0.1
+    eyes: 0.0
+    face: 0.2
+    inner_earcanal: 0.0
+    leg_front: 0.3
+    leg_rear: 0.3
+    neck: 0.4
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.2
+    tail: 0.5
+    under_tail: 0.4
+  basis: Initial values used in the original project; not physical measurements

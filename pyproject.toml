@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fure-defur"
+version = "0.1.0"
+description = "Frosting-guided defurring and strand-data preparation"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24,<2", "scipy>=1.10,<1.14", "trimesh>=4.4,<5", "open3d==0.17.0", "Pillow>=10", "opencv-python-headless>=4.8,<4.12", "scikit-image>=0.21,<0.25", "matplotlib>=3.7,<3.10", "PyYAML>=6", "plyfile>=0.8,<1.2"]
+
+[project.optional-dependencies]
+test = ["pytest>=7,<9"]
+
+[project.scripts]
+fure-defur = "fure_defur.cli:main"
+
+[tool.setuptools]
+packages = ["fure_defur"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

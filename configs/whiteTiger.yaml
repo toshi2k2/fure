@@ -1,0 +1,52 @@
+schema_version: 1
+animal: whiteTiger
+outer_source: Reference NeuS surface cleaned by a 5-decimal vertex merge, bounded triangular-hole repair, and five Taubin smoothing iterations
+outer_mesh: ../data/whiteTiger/outer.obj
+annotation_mesh: ../data/whiteTiger/annotation_mesh.obj
+annotations: ../data/whiteTiger/parts.json
+shell_stats: ../data/whiteTiger/shell_stats.npz
+views: ../data/whiteTiger/views
+eyes: ../data/whiteTiger/eyes.ply
+cm_per_scene_unit: 62.610501231467474
+eye_distance_cm: 9.0
+scale_basis: Historical 9.0 cm inter-eye assumption applied to the landmarks; not a physical measurement
+annotation_origin: transferred from the segmented 3D model
+part_labels_approved: true
+smoothness: 8
+sdf_resolution: 64
+semantic_prior:
+  length_cm:
+    belly: 4.0
+    body: 4.5
+    ears: 1.2
+    eyes: 0.0
+    face: 1.6
+    front_paws: 0.8
+    inner_earcanal: 0.0
+    leg_front: 3.0
+    leg_rear: 3.0
+    mane: 5.5
+    neck: 4.8
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.8
+    tail: 4.0
+    under_tail: 2.2
+  thickness_cm:
+    belly: 1.15
+    body: 1.3
+    ears: 0.3
+    eyes: 0.0
+    face: 0.45
+    front_paws: 0.2
+    inner_earcanal: 0.0
+    leg_front: 0.85
+    leg_rear: 0.85
+    mane: 1.65
+    neck: 1.35
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.2
+    tail: 1.15
+    under_tail: 0.6
+  basis: Initial values used in the original project; not physical measurements
