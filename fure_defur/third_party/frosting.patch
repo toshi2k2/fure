@@ -1,0 +1,1032 @@
+diff --git a/vendor/frosting/animal_skin/__init__.py b/vendor/frosting/animal_skin/__init__.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..3a25ee8e9da5b20cce4b7f3ce93bc326574e0b4e
+--- /dev/null
++++ b/vendor/frosting/animal_skin/__init__.py
+@@ -0,0 +1,3 @@
++"""Frosting shell statistics used by FurE preprocessing."""
++
++__all__ = []
+diff --git a/vendor/frosting/animal_skin/shell_export.py b/vendor/frosting/animal_skin/shell_export.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..44d09e5d8e24c1c686d1a1d259eeeafda34a4329
+--- /dev/null
++++ b/vendor/frosting/animal_skin/shell_export.py
+@@ -0,0 +1,293 @@
++"""Utilities for exporting and loading Frosting shell statistics."""
++
++from __future__ import annotations
++
++import argparse
++import logging
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any, Dict, Mapping
++
++import numpy as np
++import torch
++
++from frosting_utils.general_utils import get_scene_name
++
++
++LOGGER = logging.getLogger(__name__)
++
++
++@dataclass(frozen=True)
++class ShellStats:
++    """Container for per-vertex shell statistics exported from Frosting."""
++
++    verts: np.ndarray
++    faces: np.ndarray
++    normals: np.ndarray
++    inner_dist: np.ndarray
++    outer_dist: np.ndarray
++    inner_points: np.ndarray
++    outer_points: np.ndarray
++    shell_width: np.ndarray
++    reliability_mask_init: np.ndarray
++
++
++def _to_numpy(value: torch.Tensor) -> np.ndarray:
++    return value.detach().cpu().numpy()
++
++
++def sanitize_vertex_normals(
++    verts: np.ndarray,
++    faces: np.ndarray,
++    normals: np.ndarray,
++    eps: float = 1e-8,
++) -> np.ndarray:
++    """Replace degenerate vertex normals with geometry-derived fallbacks."""
++    verts = np.asarray(verts, dtype=np.float32)
++    faces = np.asarray(faces, dtype=np.int32)
++    normals = np.asarray(normals, dtype=np.float32).copy()
++
++    normal_norms = np.linalg.norm(normals, axis=-1, keepdims=True)
++    valid_mask = (normal_norms[:, 0] > eps) & np.isfinite(normal_norms[:, 0])
++    if valid_mask.all():
++        return normals / np.clip(normal_norms, eps, None)
++
++    face_vertices = verts[faces]
++    face_normals = np.cross(face_vertices[:, 1] - face_vertices[:, 0], face_vertices[:, 2] - face_vertices[:, 0])
++    face_norms = np.linalg.norm(face_normals, axis=-1, keepdims=True)
++    valid_face_mask = face_norms[:, 0] > eps
++    face_normals[valid_face_mask] /= face_norms[valid_face_mask]
++    face_normals[~valid_face_mask] = 0.0
++
++    accumulated = np.zeros_like(normals, dtype=np.float32)
++    for corner in range(3):
++        np.add.at(accumulated, faces[:, corner], face_normals)
++
++    accumulated_norms = np.linalg.norm(accumulated, axis=-1, keepdims=True)
++    accumulated_valid = accumulated_norms[:, 0] > eps
++    accumulated[accumulated_valid] /= accumulated_norms[accumulated_valid]
++
++    repaired = normals.copy()
++    repaired[~valid_mask & accumulated_valid] = accumulated[~valid_mask & accumulated_valid]
++
++    repaired_norms = np.linalg.norm(repaired, axis=-1, keepdims=True)
++    repaired_valid = (repaired_norms[:, 0] > eps) & np.isfinite(repaired_norms[:, 0])
++    if not repaired_valid.all():
++        valid_indices = np.flatnonzero(repaired_valid)
++        if len(valid_indices) == 0:
++            raise ValueError("Could not derive any valid vertex normals from the shell mesh.")
++        missing_indices = np.flatnonzero(~repaired_valid)
++        valid_points = verts[valid_indices]
++        for missing_index in missing_indices:
++            nearest_index = valid_indices[np.argmin(np.linalg.norm(valid_points - verts[missing_index], axis=1))]
++            repaired[missing_index] = repaired[nearest_index]
++        repaired_norms = np.linalg.norm(repaired, axis=-1, keepdims=True)
++
++    return repaired / np.clip(repaired_norms, eps, None)
++
++
++def compute_initial_reliability_mask(shell_width: np.ndarray, max_percentile: float = 97.5) -> np.ndarray:
++    """Build a simple initial reliability mask from shell thickness outliers."""
++    abs_width = np.abs(np.asarray(shell_width, dtype=np.float32))
++    width_threshold = np.quantile(abs_width, max_percentile / 100.0)
++    return abs_width <= width_threshold
++
++
++def build_shell_stats_from_frosting(frosting: Any) -> ShellStats:
++    """Extract shell statistics from an in-memory Frosting model."""
++    with torch.no_grad():
++        verts = _to_numpy(frosting.shell_base.verts_list()[0])
++        faces = _to_numpy(frosting.shell_base.faces_list()[0])
++        normals = sanitize_vertex_normals(
++            verts=verts,
++            faces=faces,
++            normals=_to_numpy(frosting.shell_base_normals),
++        )
++        inner_dist = _to_numpy(frosting._inner_dist)
++        outer_dist = _to_numpy(frosting._outer_dist)
++        inner_points = verts + inner_dist[:, None] * normals
++        outer_points = verts + outer_dist[:, None] * normals
++
++    shell_width = np.abs(outer_dist - inner_dist)
++    reliability_mask_init = compute_initial_reliability_mask(shell_width)
++    return ShellStats(
++        verts=verts.astype(np.float32),
++        faces=faces.astype(np.int32),
++        normals=normals.astype(np.float32),
++        inner_dist=inner_dist.astype(np.float32),
++        outer_dist=outer_dist.astype(np.float32),
++        inner_points=inner_points.astype(np.float32),
++        outer_points=outer_points.astype(np.float32),
++        shell_width=shell_width.astype(np.float32),
++        reliability_mask_init=reliability_mask_init.astype(bool),
++    )
++
++
++def repair_shell_stats(shell_stats: ShellStats) -> ShellStats:
++    """Sanitize a previously exported shell-stat bundle in memory."""
++    normals = sanitize_vertex_normals(shell_stats.verts, shell_stats.faces, shell_stats.normals)
++    inner_points = shell_stats.verts + shell_stats.inner_dist[:, None] * normals
++    outer_points = shell_stats.verts + shell_stats.outer_dist[:, None] * normals
++    shell_width = np.abs(shell_stats.outer_dist - shell_stats.inner_dist).astype(np.float32)
++    return ShellStats(
++        verts=shell_stats.verts.astype(np.float32),
++        faces=shell_stats.faces.astype(np.int32),
++        normals=normals.astype(np.float32),
++        inner_dist=shell_stats.inner_dist.astype(np.float32),
++        outer_dist=shell_stats.outer_dist.astype(np.float32),
++        inner_points=inner_points.astype(np.float32),
++        outer_points=outer_points.astype(np.float32),
++        shell_width=shell_width,
++        reliability_mask_init=compute_initial_reliability_mask(shell_width).astype(bool),
++    )
++
++
++def shell_output_dir(scene_name: str, output_root: str | Path = "output/refined_frosting_shell") -> Path:
++    """Return the output directory used for shell exports."""
++    return Path(output_root) / scene_name
++
++
++def write_shell_debug_ply(shell_stats: ShellStats, output_path: str | Path) -> Path:
++    """Write a colored point cloud containing base, inner, and outer shell samples."""
++    import open3d as o3d
++
++    output_path = Path(output_path)
++    output_path.parent.mkdir(parents=True, exist_ok=True)
++    base_color = np.tile(np.array([[0.65, 0.65, 0.65]], dtype=np.float64), (len(shell_stats.verts), 1))
++    inner_color = np.tile(np.array([[0.90, 0.25, 0.25]], dtype=np.float64), (len(shell_stats.inner_points), 1))
++    outer_color = np.tile(np.array([[0.20, 0.45, 0.90]], dtype=np.float64), (len(shell_stats.outer_points), 1))
++    points = np.concatenate([shell_stats.verts, shell_stats.inner_points, shell_stats.outer_points], axis=0)
++    colors = np.concatenate([base_color, inner_color, outer_color], axis=0)
++    point_cloud = o3d.geometry.PointCloud()
++    point_cloud.points = o3d.utility.Vector3dVector(points.astype(np.float64))
++    point_cloud.colors = o3d.utility.Vector3dVector(colors)
++    o3d.io.write_point_cloud(str(output_path), point_cloud)
++    return output_path
++
++
++def save_shell_stats(shell_stats: ShellStats, output_dir: str | Path) -> Path:
++    """Persist shell statistics to the canonical npz file and debug point cloud."""
++    output_dir = Path(output_dir)
++    output_dir.mkdir(parents=True, exist_ok=True)
++    shell_stats_path = output_dir / "shell_stats.npz"
++    np.savez_compressed(
++        shell_stats_path,
++        verts=shell_stats.verts,
++        faces=shell_stats.faces,
++        normals=shell_stats.normals,
++        inner_dist=shell_stats.inner_dist,
++        outer_dist=shell_stats.outer_dist,
++        inner_points=shell_stats.inner_points,
++        outer_points=shell_stats.outer_points,
++        shell_width=shell_stats.shell_width,
++        reliability_mask_init=shell_stats.reliability_mask_init,
++    )
++    write_shell_debug_ply(shell_stats, output_dir / "shell_debug.ply")
++    return shell_stats_path
++
++
++def export_shell_stats_from_frosting(
++    frosting: Any,
++    scene_name: str,
++    output_root: str | Path = "output/refined_frosting_shell",
++) -> Path:
++    """Export the shell statistics consumed by FurE preprocessing."""
++    shell_stats = build_shell_stats_from_frosting(frosting)
++    return save_shell_stats(shell_stats, shell_output_dir(scene_name, output_root=output_root))
++
++
++def load_shell_stats(shell_stats_path: str | Path) -> ShellStats:
++    """Load shell statistics from disk."""
++    data: Mapping[str, np.ndarray] = np.load(shell_stats_path)
++    return ShellStats(
++        verts=np.asarray(data["verts"], dtype=np.float32),
++        faces=np.asarray(data["faces"], dtype=np.int32),
++        normals=np.asarray(data["normals"], dtype=np.float32),
++        inner_dist=np.asarray(data["inner_dist"], dtype=np.float32),
++        outer_dist=np.asarray(data["outer_dist"], dtype=np.float32),
++        inner_points=np.asarray(data["inner_points"], dtype=np.float32),
++        outer_points=np.asarray(data["outer_points"], dtype=np.float32),
++        shell_width=np.asarray(data["shell_width"], dtype=np.float32),
++        reliability_mask_init=np.asarray(data["reliability_mask_init"], dtype=bool),
++    )
++
++
++def repair_shell_stats_file(shell_stats_path: str | Path, output_path: str | Path | None = None) -> Path:
++    """Repair an on-disk shell-stat bundle and write the sanitized result."""
++    shell_stats_path = Path(shell_stats_path)
++    shell_stats = repair_shell_stats(load_shell_stats(shell_stats_path))
++    if output_path is None:
++        output_dir = shell_stats_path.parent
++    else:
++        output_path = Path(output_path)
++        output_dir = output_path.parent if output_path.suffix else output_path
++    return save_shell_stats(shell_stats, output_dir)
++
++
++def find_latest_checkpoint(frosting_root: str | Path) -> Path:
++    """Locate the latest Frosting checkpoint under a training output directory."""
++    frosting_root = Path(frosting_root)
++    if frosting_root.is_file():
++        return frosting_root
++    checkpoints = sorted(frosting_root.rglob("*.pt"))
++    if not checkpoints:
++        raise FileNotFoundError(f"No Frosting checkpoints found under {frosting_root}")
++    return max(checkpoints, key=lambda path: (path.stat().st_mtime, int(path.stem) if path.stem.isdigit() else -1))
++
++
++def export_shell_stats_from_checkpoint(
++    checkpoint_path: str | Path,
++    scene_name: str,
++    output_root: str | Path = "output/refined_frosting_shell",
++    device: str = "cpu",
++) -> Path:
++    """Load a Frosting checkpoint and export shell statistics."""
++    from frosting_scene.frosting_model import load_frosting_model
++
++    frosting = load_frosting_model(str(checkpoint_path), device=torch.device(device))
++    return export_shell_stats_from_frosting(frosting=frosting, scene_name=scene_name, output_root=output_root)
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(description="Export Frosting shell statistics for the animal skin pipeline.")
++    parser.add_argument("--scene_path", type=str, default=None, help="Scene path used to derive the output scene name.")
++    parser.add_argument("--scene_name", type=str, default=None, help="Override the output scene name.")
++    parser.add_argument("--frosting_root", type=str, default=None, help="Frosting checkpoint file or output directory.")
++    parser.add_argument("--shell_stats_path", type=str, default=None, help="Repair an existing shell_stats.npz instead of loading a Frosting checkpoint.")
++    parser.add_argument(
++        "--output_root",
++        type=str,
++        default="output/refined_frosting_shell",
++        help="Root directory for shell statistic exports.",
++    )
++    parser.add_argument("--device", type=str, default="cpu", help="Torch device used to load the checkpoint.")
++    return parser.parse_args()
++
++
++def main() -> None:
++    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
++    args = parse_args()
++    if args.shell_stats_path is not None:
++        repaired_path = repair_shell_stats_file(args.shell_stats_path)
++        LOGGER.info("Repaired shell statistics saved to %s", repaired_path)
++        return
++    if args.frosting_root is None:
++        raise ValueError("Either --frosting_root or --shell_stats_path must be provided.")
++    scene_name = args.scene_name
++    if scene_name is None:
++        if args.scene_path is not None:
++            scene_name = get_scene_name(args.scene_path)
++        else:
++            scene_name = get_scene_name(args.frosting_root)
++    checkpoint_path = find_latest_checkpoint(args.frosting_root)
++    shell_stats_path = export_shell_stats_from_checkpoint(
++        checkpoint_path=checkpoint_path,
++        scene_name=scene_name,
++        output_root=args.output_root,
++        device=args.device,
++    )
++    LOGGER.info("Shell statistics saved to %s", shell_stats_path)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/vendor/frosting/frosting_extractors/coarse_shell.py b/vendor/frosting/frosting_extractors/coarse_shell.py
+index a54d102782bac23e4c6da60f402ef6f0bf2b248d..e38d0a120de4170b962db964bddcb86b4fb6af32 100644
+--- a/vendor/frosting/frosting_extractors/coarse_shell.py
++++ b/vendor/frosting/frosting_extractors/coarse_shell.py
+@@ -2,18 +2,41 @@ import os
+ import numpy as np
+ import open3d as o3d
+ import torch
++from typing import Union
+ from pytorch3d.structures import Meshes
+ from pytorch3d.renderer import RasterizationSettings, MeshRasterizer
+ from pytorch3d.ops import knn_points
+ from frosting_scene.gs_model import GaussianSplattingWrapper
+ from frosting_scene.sugar_model import SuGaR
+-from frosting_utils.general_utils import str2bool
++from frosting_utils.general_utils import get_output_scene_dir, str2bool
+ from frosting_utils.spherical_harmonics import SH2RGB
+ from frosting_scene.frosting_model import compute_level_surface_points_and_range_from_camera
+ 
+ from rich.console import Console
+ 
+ 
++def deterministic_poisson_subsample_indices(
++    count: int,
++    max_points: int,
++    *,
++    device: Union[torch.device, str],
++    seed: int = 20260504,
++) -> torch.Tensor:
++    """Return deterministic random indices for bounded Poisson reconstruction.
++
++    A strided/linspace sample can preserve ordering artifacts from the surface
++    point generator and show up as regular holes in the reconstructed mesh.
++    Random sampling avoids that aliasing while staying reproducible.
++    """
++
++    if max_points <= 0 or count <= max_points:
++        return torch.arange(count, device=device, dtype=torch.long)
++    generator = torch.Generator(device="cpu")
++    generator.manual_seed(seed)
++    indices = torch.randperm(count, generator=generator)[:max_points].sort().values
++    return indices.to(device=device)
++
++
+ def compute_optimal_poisson_depth(
+     sugar:SuGaR,
+     cell_size_nn_distance_ratio:float=100,
+@@ -83,8 +106,33 @@ def extract_shell_base_from_coarse_sugar(args):
+     clean_mesh = True
+     remove_nonvisible_connected_components = True  # ADDED
+     cluster_visibility_threshold = args.connected_components_vis_th  # ADDED  -- 0.5 or 0.001
++    extract_background_mesh = bool(getattr(args, "extract_background_mesh", True))
++    max_poisson_points = int(getattr(args, "max_poisson_points", 0) or 0)
+     
+     project_mesh_on_surface_points = args.project_mesh_on_surface_points  # ADDED
++
++    def subsample_poisson_inputs(
++        points: torch.Tensor,
++        colors: torch.Tensor,
++        normals: torch.Tensor,
++        label: str,
++    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++        """Bound Open3D Poisson input size to avoid native OOM termination."""
++
++        if max_poisson_points <= 0 or points.shape[0] <= max_poisson_points:
++            return points, colors, normals
++        seed = 20260504 + sum(ord(character) for character in label)
++        idx = deterministic_poisson_subsample_indices(
++            int(points.shape[0]),
++            max_poisson_points,
++            device=points.device,
++            seed=seed,
++        )
++        CONSOLE.print(
++            f"Randomly subsampling {label} Poisson point cloud from {points.shape[0]} to {max_poisson_points} "
++            f"points with seed {seed}."
++        )
++        return points[idx], colors[idx], normals[idx]
+     
+     # Vanilla 3DGS data
+     source_path = args.scene_path
+@@ -109,10 +157,7 @@ def extract_shell_base_from_coarse_sugar(args):
+     
+     # Mesh output dir
+     if args.mesh_output_dir is None:
+-        if len(args.scene_path.split("/")[-1]) > 0:
+-            args.mesh_output_dir = os.path.join("./output/coarse_shell", args.scene_path.split("/")[-1])
+-        else:
+-            args.mesh_output_dir = os.path.join("./output/coarse_shell", args.scene_path.split("/")[-2])
++        args.mesh_output_dir = get_output_scene_dir("./output/coarse_shell", args.scene_path)
+     mesh_output_dir = args.mesh_output_dir
+     os.makedirs(mesh_output_dir, exist_ok=True)
+             
+@@ -157,6 +202,7 @@ def extract_shell_base_from_coarse_sugar(args):
+     CONSOLE.print("Cleaning quantile:", vertices_density_quantile)
+     CONSOLE.print("Connected components visibility threshold:", cluster_visibility_threshold)
+     CONSOLE.print("Project mesh on surface points:", project_mesh_on_surface_points)
++    CONSOLE.print("Extract background mesh:", extract_background_mesh)
+     CONSOLE.print("Use custom bbox:", use_custom_bbox)
+     CONSOLE.print("Use eval split:", use_train_test_split)
+     CONSOLE.print("GPU:", args.gpu)
+@@ -413,6 +459,15 @@ def extract_shell_base_from_coarse_sugar(args):
+                 bg_inner_points = surface_inner_points[points_idx][bg_mask]  # Added
+                 bg_colors = surface_colors[points_idx][bg_mask]
+                 bg_normals = surface_normals[points_idx][bg_mask]
++                projection_points = surface_points
++                projection_colors = surface_colors
++                if not extract_background_mesh:
++                    bg_points = surface_points.new_empty((0, 3))
++                    bg_inner_points = surface_inner_points.new_empty((0, 3))
++                    bg_colors = surface_colors.new_empty((0, 3))
++                    bg_normals = surface_normals.new_empty((0, 3))
++                    projection_points = fg_points
++                    projection_colors = fg_colors
+ 
+                 CONSOLE.print("Foreground points:", fg_points.shape, fg_colors.shape, fg_normals.shape)
+                 CONSOLE.print("Background points:", bg_points.shape, bg_colors.shape, bg_normals.shape)
+@@ -420,11 +475,14 @@ def extract_shell_base_from_coarse_sugar(args):
+                 # ---Compute foreground mesh---
+                 CONSOLE.print("\n-----Foreground mesh-----")
+                 if fg_points.shape[0] > 0:
++                    fg_points_for_poisson, fg_colors_for_poisson, fg_normals_for_poisson = subsample_poisson_inputs(
++                        fg_points, fg_colors, fg_normals, "foreground"
++                    )
+                     CONSOLE.print("Computing points, colors and normals...")
+                     fg_pcd = o3d.geometry.PointCloud()
+-                    fg_pcd.points = o3d.utility.Vector3dVector(fg_points.double().cpu().numpy())
+-                    fg_pcd.colors = o3d.utility.Vector3dVector(fg_colors.double().cpu().numpy())
+-                    fg_pcd.normals = o3d.utility.Vector3dVector(fg_normals.double().cpu().numpy())
++                    fg_pcd.points = o3d.utility.Vector3dVector(fg_points_for_poisson.double().cpu().numpy())
++                    fg_pcd.colors = o3d.utility.Vector3dVector(fg_colors_for_poisson.double().cpu().numpy())
++                    fg_pcd.normals = o3d.utility.Vector3dVector(fg_normals_for_poisson.double().cpu().numpy())
+ 
+                     # outliers removal
+                     cl, ind = fg_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=20.)
+@@ -448,12 +506,15 @@ def extract_shell_base_from_coarse_sugar(args):
+                 
+                 # ---Compute background mesh---
+                 CONSOLE.print("\n-----Background mesh-----")
+-                if bg_points.shape[0] > 0:
++                if extract_background_mesh and bg_points.shape[0] > 0:
++                    bg_points_for_poisson, bg_colors_for_poisson, bg_normals_for_poisson = subsample_poisson_inputs(
++                        bg_points, bg_colors, bg_normals, "background"
++                    )
+                     CONSOLE.print("Computing points, colors and normals...")
+                     bg_pcd = o3d.geometry.PointCloud()
+-                    bg_pcd.points = o3d.utility.Vector3dVector(bg_points.double().cpu().numpy())
+-                    bg_pcd.colors = o3d.utility.Vector3dVector(bg_colors.double().cpu().numpy())
+-                    bg_pcd.normals = o3d.utility.Vector3dVector(bg_normals.double().cpu().numpy())
++                    bg_pcd.points = o3d.utility.Vector3dVector(bg_points_for_poisson.double().cpu().numpy())
++                    bg_pcd.colors = o3d.utility.Vector3dVector(bg_colors_for_poisson.double().cpu().numpy())
++                    bg_pcd.normals = o3d.utility.Vector3dVector(bg_normals_for_poisson.double().cpu().numpy())
+ 
+                     # outliers removal
+                     cl, ind = bg_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=20.)
+@@ -531,13 +592,13 @@ def extract_shell_base_from_coarse_sugar(args):
+ 
+                         proj_knn_idx = knn_points(
+                             mesh_verts[None], 
+-                            surface_points[None], 
++                            projection_points[None],
+                             K=1,
+                         ).idx[0][..., 0]
+                         
+-                        new_mesh_verts = surface_points[proj_knn_idx]
++                        new_mesh_verts = projection_points[proj_knn_idx]
+                         new_mesh_faces = mesh_faces
+-                        new_mesh_colors = surface_colors[proj_knn_idx]
++                        new_mesh_colors = projection_colors[proj_knn_idx]
+                         
+                         decimated_o3d_mesh = o3d.geometry.TriangleMesh()
+                         decimated_o3d_mesh.vertices = o3d.utility.Vector3dVector(new_mesh_verts.cpu().numpy())
+@@ -579,7 +640,11 @@ def extract_shell_base_from_coarse_sugar(args):
+                             image_size=(sugar.image_height, sugar.image_width),
+                             blur_radius=0.0, 
+                             faces_per_pixel=faces_per_pixel,
+-                            # max_faces_per_bin=max_faces_per_bin
++                            # PyTorch3D's automatic bin capacity can overflow on
++                            # the 200k-face low-poly shell and silently return an
++                            # incomplete visibility image.  Keep the same explicit
++                            # capacity used by the other mesh rasterizers here.
++                            max_faces_per_bin=max_faces_per_bin
+                         )
+                         rasterizer = MeshRasterizer(
+                             cameras=nerfmodel.training_cameras.p3d_cameras[0], 
+@@ -671,10 +736,13 @@ def extract_shell_base_from_coarse_sugar(args):
+                 # ---Compute foreground mesh---
+                 CONSOLE.print("\n-----Foreground mesh-----")
+                 CONSOLE.print("Computing points, colors and normals...")
++                fg_points_for_poisson, fg_colors_for_poisson, fg_normals_for_poisson = subsample_poisson_inputs(
++                    fg_points, fg_colors, fg_normals, "foreground"
++                )
+                 fg_pcd = o3d.geometry.PointCloud()
+-                fg_pcd.points = o3d.utility.Vector3dVector(fg_points.double().cpu().numpy())
+-                fg_pcd.colors = o3d.utility.Vector3dVector(fg_colors.double().cpu().numpy())
+-                fg_pcd.normals = o3d.utility.Vector3dVector(fg_normals.double().cpu().numpy())
++                fg_pcd.points = o3d.utility.Vector3dVector(fg_points_for_poisson.double().cpu().numpy())
++                fg_pcd.colors = o3d.utility.Vector3dVector(fg_colors_for_poisson.double().cpu().numpy())
++                fg_pcd.normals = o3d.utility.Vector3dVector(fg_normals_for_poisson.double().cpu().numpy())
+ 
+                 # outliers removal
+                 cl, ind = fg_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=20.)
+@@ -696,10 +764,13 @@ def extract_shell_base_from_coarse_sugar(args):
+                 if bg_points.shape[0] > 0:
+                     CONSOLE.print("\n-----Background mesh-----")
+                     CONSOLE.print("Computing points, colors and normals...")
++                    bg_points_for_poisson, bg_colors_for_poisson, bg_normals_for_poisson = subsample_poisson_inputs(
++                        bg_points, bg_colors, bg_normals, "background"
++                    )
+                     bg_pcd = o3d.geometry.PointCloud()
+-                    bg_pcd.points = o3d.utility.Vector3dVector(bg_points.double().cpu().numpy())
+-                    bg_pcd.colors = o3d.utility.Vector3dVector(bg_colors.double().cpu().numpy())
+-                    bg_pcd.normals = o3d.utility.Vector3dVector(bg_normals.double().cpu().numpy())
++                    bg_pcd.points = o3d.utility.Vector3dVector(bg_points_for_poisson.double().cpu().numpy())
++                    bg_pcd.colors = o3d.utility.Vector3dVector(bg_colors_for_poisson.double().cpu().numpy())
++                    bg_pcd.normals = o3d.utility.Vector3dVector(bg_normals_for_poisson.double().cpu().numpy())
+ 
+                     # outliers removal
+                     cl, ind = bg_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=20.)
+diff --git a/vendor/frosting/frosting_scene/cameras.py b/vendor/frosting/frosting_scene/cameras.py
+index d9e5b8cfc88eb973f7bb69c56c47e321b9e7204e..9d92184f87d92c4511cc9644ad5353d8a51f58e6 100644
+--- a/vendor/frosting/frosting_scene/cameras.py
++++ b/vendor/frosting/frosting_scene/cameras.py
+@@ -8,7 +8,7 @@ from PIL import Image
+ from pytorch3d.renderer import FoVPerspectiveCameras as P3DCameras
+ from pytorch3d.renderer.cameras import _get_sfm_calibration_matrix
+ 
+-from frosting_utils.graphics_utils import focal2fov, fov2focal, getWorld2View2, getProjectionMatrix
++from frosting_utils.graphics_utils import focal2fov, fov2focal, getWorld2View2, getProjectionMatrixShift
+ from frosting_utils.general_utils import PILtoTorch
+ 
+ 
+@@ -89,6 +89,8 @@ def load_gs_cameras(source_path, gs_output_path, image_resolution=1,
+         height = camera_transform['height']
+         fy = camera_transform['fy']
+         fx = camera_transform['fx']
++        cx = float(camera_transform.get('cx', width / 2.0))
++        cy = float(camera_transform.get('cy', height / 2.0))
+         fov_y = focal2fov(fy, height)
+         fov_x = focal2fov(fx, width)
+         
+@@ -99,11 +101,19 @@ def load_gs_cameras(source_path, gs_output_path, image_resolution=1,
+         
+         if load_gt_images:
+             image = Image.open(image_path)
+-            if white_background:
++            mask_path = os.path.join(source_path, "masks_2", "body", name + extension)
++            if os.path.isfile(mask_path):
++                im_data = np.array(image.convert("RGB"), dtype=np.float32) / 255.0
++                alpha = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)[:, :, None] / 255.0
++                bg = np.array([1.0, 1.0, 1.0], dtype=np.float32) if white_background else np.array([0.0, 0.0, 0.0], dtype=np.float32)
++                arr = im_data * alpha + bg * (1.0 - alpha)
++                image = Image.fromarray(np.array(arr * 255.0, dtype=np.byte), "RGB")
++            elif image.mode == "RGBA":
+                 im_data = np.array(image.convert("RGBA"))
+-                bg = np.array([1,1,1])
++                bg_value = 1.0 if white_background else 0.0
++                bg = np.array([bg_value, bg_value, bg_value], dtype=np.float32)
+                 norm_data = im_data / 255.0
+-                arr = norm_data[:,:,:3] * norm_data[:, :, 3:4] + bg * (1 - norm_data[:, :, 3:4])
++                arr = norm_data[:, :, :3] * norm_data[:, :, 3:4] + bg * (1 - norm_data[:, :, 3:4])
+                 image = Image.fromarray(np.array(arr*255.0, dtype=np.byte), "RGB")
+             orig_w, orig_h = image.size
+             downscale_factor = 1
+@@ -114,6 +124,8 @@ def load_gs_cameras(source_path, gs_output_path, image_resolution=1,
+                 additional_downscale_factor = max(orig_h, orig_w) / max_img_size
+                 downscale_factor = additional_downscale_factor * downscale_factor
+             resolution = round(orig_w/(downscale_factor)), round(orig_h/(downscale_factor))
++            cx = cx / downscale_factor
++            cy = cy / downscale_factor
+             resized_image_rgb = PILtoTorch(image, resolution)
+             gt_image = resized_image_rgb[:3, ...]
+             
+@@ -126,11 +138,14 @@ def load_gs_cameras(source_path, gs_output_path, image_resolution=1,
+             if max(height, width) > max_img_size:
+                 additional_downscale_factor = max(height, width) / max_img_size
+                 downscale_factor = additional_downscale_factor * downscale_factor
++            cx = cx / downscale_factor
++            cy = cy / downscale_factor
+             image_height, image_width = round(height/downscale_factor), round(width/downscale_factor)
+         
+         gs_camera = GSCamera(
+             colmap_id=id, image=gt_image, gt_alpha_mask=None,
+             R=R, T=T, FoVx=fov_x, FoVy=fov_y,
++            cx=cx, cy=cy,
+             image_name=name, uid=id,
+             image_height=image_height, image_width=image_width,)
+         
+@@ -144,6 +159,7 @@ class GSCamera(torch.nn.Module):
+     """
+     def __init__(self, colmap_id, R, T, FoVx, FoVy, image, gt_alpha_mask,
+                  image_name, uid,
++                 cx=None, cy=None,
+                  trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device = "cuda",
+                  image_height=None, image_width=None,
+                  ):
+@@ -202,12 +218,23 @@ class GSCamera(torch.nn.Module):
+ 
+         self.zfar = 100.0  # TODO: Increase value
+         self.znear = 0.01
++        self.cx = float(self.image_width / 2.0 if cx is None else cx)
++        self.cy = float(self.image_height / 2.0 if cy is None else cy)
+ 
+         self.trans = trans
+         self.scale = scale
+ 
+         self.world_view_transform = torch.tensor(getWorld2View2(R, T, trans, scale)).transpose(0, 1).cuda()
+-        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
++        self.projection_matrix = getProjectionMatrixShift(
++            znear=self.znear,
++            zfar=self.zfar,
++            cx=self.cx,
++            cy=self.cy,
++            width=self.image_width,
++            height=self.image_height,
++            fovX=self.FoVx,
++            fovY=self.FoVy,
++        ).transpose(0, 1).cuda()
+         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
+         self.camera_center = self.world_view_transform.inverse()[3, :3]
+         
+@@ -270,8 +297,8 @@ def convert_camera_from_gs_to_pytorch3d(gs_cameras, device='cuda'):
+     fy = torch.Tensor(np.array([fov2focal(gs_camera.FoVy, gs_camera.image_height) for gs_camera in gs_cameras])).to(device)
+     image_height = torch.tensor(np.array([gs_camera.image_height for gs_camera in gs_cameras]), dtype=torch.int).to(device)
+     image_width = torch.tensor(np.array([gs_camera.image_width for gs_camera in gs_cameras]), dtype=torch.int).to(device)
+-    cx = image_width / 2.  # torch.zeros_like(fx).to(device)
+-    cy = image_height / 2.  # torch.zeros_like(fy).to(device)
++    cx = torch.Tensor(np.array([getattr(gs_camera, "cx", gs_camera.image_width / 2.0) for gs_camera in gs_cameras])).to(device)
++    cy = torch.Tensor(np.array([getattr(gs_camera, "cy", gs_camera.image_height / 2.0) for gs_camera in gs_cameras])).to(device)
+     
+     w2c = torch.zeros(N, 4, 4).to(device)
+     w2c[:, :3, :3] = R.transpose(-1, -2)
+@@ -406,6 +433,8 @@ def convert_camera_from_pytorch3d_to_gs(
+         camera = GSCamera(
+             colmap_id=cam_idx, image=None, gt_alpha_mask=None,
+             R=R, T=T, FoVx=FovX, FoVy=FovY,
++            cx=image_width / 2.0,
++            cy=image_height / 2.0,
+             image_name=name, uid=cam_idx,
+             image_height=image_height, 
+             image_width=image_width,
+@@ -451,8 +480,8 @@ class CamerasWrapper:
+         self.fy = torch.Tensor(np.array([fov2focal(gs_camera.FoVy, gs_camera.image_height) for gs_camera in gs_cameras])).to(device)
+         self.height = torch.tensor(np.array([gs_camera.image_height for gs_camera in gs_cameras]), dtype=torch.int).to(device)
+         self.width = torch.tensor(np.array([gs_camera.image_width for gs_camera in gs_cameras]), dtype=torch.int).to(device)
+-        self.cx = self.width / 2.  # torch.zeros_like(fx).to(device)
+-        self.cy = self.height / 2.  # torch.zeros_like(fy).to(device)
++        self.cx = torch.Tensor(np.array([getattr(gs_camera, "cx", gs_camera.image_width / 2.0) for gs_camera in gs_cameras])).to(device)
++        self.cy = torch.Tensor(np.array([getattr(gs_camera, "cy", gs_camera.image_height / 2.0) for gs_camera in gs_cameras])).to(device)
+         
+         w2c = torch.zeros(N, 4, 4).to(device)
+         w2c[:, :3, :3] = R.transpose(-1, -2)
+diff --git a/vendor/frosting/frosting_trainers/coarse_density.py b/vendor/frosting/frosting_trainers/coarse_density.py
+index 4c75c0ea915627b099bb7567baacab3f6a22d584..d0123e52cdaeea964d4541e9cebed9ba86018e74 100644
+--- a/vendor/frosting/frosting_trainers/coarse_density.py
++++ b/vendor/frosting/frosting_trainers/coarse_density.py
+@@ -8,6 +8,7 @@ from frosting_scene.gs_model import GaussianSplattingWrapper, fetchPly
+ from frosting_scene.sugar_model import SuGaR
+ from frosting_scene.sugar_optimizer import OptimizationParams, SuGaROptimizer
+ from frosting_scene.sugar_densifier import SuGaRDensifier
++from frosting_utils.general_utils import get_output_scene_dir
+ from frosting_utils.loss_utils import ssim, l1_loss, l2_loss
+ 
+ from rich.console import Console
+@@ -230,10 +231,7 @@ def coarse_training_with_density_regularization(args):
+     # ====================End of parameters====================
+ 
+     if args.output_dir is None:
+-        if len(args.scene_path.split("/")[-1]) > 0:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-1])
+-        else:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-2])
++        args.output_dir = get_output_scene_dir("./output/coarse", args.scene_path)
+             
+     source_path = args.scene_path
+     gs_checkpoint_path = args.checkpoint_path
+@@ -836,4 +834,4 @@ def coarse_training_with_density_regularization(args):
+                     )
+ 
+     CONSOLE.print("Final model saved.")
+-    return model_path
+\ No newline at end of file
++    return model_path
+diff --git a/vendor/frosting/frosting_trainers/coarse_density_and_dn_consistency.py b/vendor/frosting/frosting_trainers/coarse_density_and_dn_consistency.py
+index 440a801735dd9715a5c8b0a38b4803df0b9794a5..a99d08148f31fc0575aff61c56ef8b7c9ef49aca 100644
+--- a/vendor/frosting/frosting_trainers/coarse_density_and_dn_consistency.py
++++ b/vendor/frosting/frosting_trainers/coarse_density_and_dn_consistency.py
+@@ -8,6 +8,7 @@ from frosting_scene.gs_model import GaussianSplattingWrapper, fetchPly
+ from frosting_scene.sugar_model import SuGaR
+ from frosting_scene.sugar_optimizer import OptimizationParams, SuGaROptimizer
+ from frosting_scene.sugar_densifier import SuGaRDensifier
++from frosting_utils.general_utils import get_output_scene_dir
+ from frosting_utils.loss_utils import ssim, l1_loss, l2_loss
+ 
+ from rich.console import Console
+@@ -317,10 +318,7 @@ def coarse_training_with_density_regularization_and_dn_consistency(args):
+     # ====================End of parameters====================
+ 
+     if args.output_dir is None:
+-        if len(args.scene_path.split("/")[-1]) > 0:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-1])
+-        else:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-2])
++        args.output_dir = get_output_scene_dir("./output/coarse", args.scene_path)
+             
+     source_path = args.scene_path
+     gs_checkpoint_path = args.checkpoint_path
+@@ -939,4 +937,4 @@ def coarse_training_with_density_regularization_and_dn_consistency(args):
+                     )
+ 
+     CONSOLE.print("Final model saved.")
+-    return model_path
+\ No newline at end of file
++    return model_path
+diff --git a/vendor/frosting/frosting_trainers/coarse_sdf.py b/vendor/frosting/frosting_trainers/coarse_sdf.py
+index 47d677c3cc29f77f52703eb1e436f1b2f31ccf2c..2147e44e2e16160ecdc3e9dae25adcc66304866f 100644
+--- a/vendor/frosting/frosting_trainers/coarse_sdf.py
++++ b/vendor/frosting/frosting_trainers/coarse_sdf.py
+@@ -8,6 +8,7 @@ from frosting_scene.gs_model import GaussianSplattingWrapper, fetchPly
+ from frosting_scene.sugar_model import SuGaR
+ from frosting_scene.sugar_optimizer import OptimizationParams, SuGaROptimizer
+ from frosting_scene.sugar_densifier import SuGaRDensifier
++from frosting_utils.general_utils import get_output_scene_dir
+ from frosting_utils.loss_utils import ssim, l1_loss, l2_loss
+ 
+ from rich.console import Console
+@@ -226,10 +227,7 @@ def coarse_training_with_sdf_regularization(args):
+     # ====================End of parameters====================
+ 
+     if args.output_dir is None:
+-        if len(args.scene_path.split("/")[-1]) > 0:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-1])
+-        else:
+-            args.output_dir = os.path.join("./output/coarse", args.scene_path.split("/")[-2])
++        args.output_dir = get_output_scene_dir("./output/coarse", args.scene_path)
+             
+     source_path = args.scene_path
+     gs_checkpoint_path = args.checkpoint_path
+@@ -822,4 +820,4 @@ def coarse_training_with_sdf_regularization(args):
+                     )
+ 
+     CONSOLE.print("Final model saved.")
+-    return model_path
+\ No newline at end of file
++    return model_path
+diff --git a/vendor/frosting/frosting_trainers/refine.py b/vendor/frosting/frosting_trainers/refine.py
+index fdbd2449589612a8882e3233081a480107d73f9c..f50a4acaa11e47c396072e118d8262340280e62b 100644
+--- a/vendor/frosting/frosting_trainers/refine.py
++++ b/vendor/frosting/frosting_trainers/refine.py
+@@ -2,6 +2,7 @@ import os
+ import numpy as np
+ import torch
+ import open3d as o3d
++from animal_skin.shell_export import export_shell_stats_from_frosting
+ from pytorch3d.loss import mesh_laplacian_smoothing, mesh_normal_consistency
+ from pytorch3d.transforms import quaternion_apply, quaternion_invert
+ from pytorch3d.io import save_obj
+@@ -9,6 +10,7 @@ from frosting_scene.gs_model import GaussianSplattingWrapper, fetchPly
+ from frosting_scene.sugar_model import SuGaR, SH2RGB
+ from frosting_scene.frosting_model import Frosting, convert_frosting_into_gaussians, rasterization_with_pix_to_face
+ from frosting_scene.frosting_optimizer import OptimizationParams, FrostingOptimizer
++from frosting_utils.general_utils import get_output_scene_dir, get_scene_name
+ from frosting_utils.loss_utils import ssim, l1_loss, l2_loss
+ from frosting_utils.mesh_rasterization import RasterizationSettings, MeshRasterizer
+ from frosting_utils.texture import compute_textured_mesh_for_frosting_mesh
+@@ -96,10 +98,7 @@ def refined_training(args):
+     # ====================End of parameters====================
+ 
+     if args.output_dir is None:
+-        if len(args.scene_path.split("/")[-1]) > 0:
+-            args.output_dir = os.path.join("./output/refined_frosting", args.scene_path.split("/")[-1])
+-        else:
+-            args.output_dir = os.path.join("./output/refined_frosting", args.scene_path.split("/")[-2])
++        args.output_dir = get_output_scene_dir("./output/refined_frosting", args.scene_path)
+             
+     # Bounding box
+     if (args.bboxmin is None) or (args.bboxmin == 'None'):
+@@ -125,6 +124,7 @@ def refined_training(args):
+     
+     # Data parameters
+     source_path = args.scene_path
++    scene_name = get_scene_name(source_path)
+     gs_checkpoint_path = args.checkpoint_path
+     sugar_model_path = args.sugar_path
+     shell_base_to_bind_path = args.mesh_path
+@@ -581,6 +581,12 @@ def refined_training(args):
+                     )
+ 
+     CONSOLE.print("Final model saved.")
++
++    shell_stats_path = export_shell_stats_from_frosting(
++        frosting=frosting,
++        scene_name=scene_name,
++    )
++    CONSOLE.print("Shell statistics saved at:", shell_stats_path)
+     
+     if export_ply_at_the_end:
+         # =====Build path=====
+@@ -630,4 +636,4 @@ def refined_training(args):
+             )
+         CONSOLE.print("Textured mesh saved at:", refined_obj_save_path)
+     
+-    return model_path
+\ No newline at end of file
++    return model_path
+diff --git a/vendor/frosting/frosting_utils/general_utils.py b/vendor/frosting/frosting_utils/general_utils.py
+index a6f10b5e44b427a5a7ae69bbddc18c14ad270c6c..01683a625e583566acf4de7f2ea51089d5298e84 100644
+--- a/vendor/frosting/frosting_utils/general_utils.py
++++ b/vendor/frosting/frosting_utils/general_utils.py
+@@ -1,3 +1,5 @@
++from pathlib import Path
++
+ import numpy as np
+ import torch
+ 
+@@ -20,6 +22,21 @@ def str2bool(v):
+     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+         return False
+ 
++
++def get_scene_name(scene_path: str) -> str:
++    """Return a stable scene name from a user-provided scene path."""
++    path = Path(scene_path).expanduser()
++    if path.name:
++        return path.name
++    if path.parent.name:
++        return path.parent.name
++    raise ValueError(f"Could not derive a scene name from path: {scene_path}")
++
++
++def get_output_scene_dir(output_root: str, scene_path: str) -> str:
++    """Build a deterministic output directory for a scene path."""
++    return str(Path(output_root) / get_scene_name(scene_path))
++
+ def get_expon_lr_func(
+     lr_init, lr_final, lr_delay_steps=0, lr_delay_mult=1.0, max_steps=1000000
+ ):
+@@ -53,4 +70,4 @@ def get_expon_lr_func(
+         log_lerp = np.exp(np.log(lr_init) * (1 - t) + np.log(lr_final) * t)
+         return delay_rate * log_lerp
+ 
+-    return helper
+\ No newline at end of file
++    return helper
+diff --git a/vendor/frosting/frosting_utils/graphics_utils.py b/vendor/frosting/frosting_utils/graphics_utils.py
+index 2b0966c8208a6409764868202864ec20ce33c0cf..b197e507c61e2cd18d690aa0da2175b22290aaf4 100644
+--- a/vendor/frosting/frosting_utils/graphics_utils.py
++++ b/vendor/frosting/frosting_utils/graphics_utils.py
+@@ -62,6 +62,38 @@ def getWorld2View2(R, t, translate=np.array([.0, .0, .0]), scale=1.0):
+     Rt = np.linalg.inv(C2W)
+     return np.float32(Rt)
+ 
++def getProjectionMatrixShift(znear, zfar, cx, cy, width, height, fovX, fovY):
++    """Build a perspective projection matrix with a non-centered principal point."""
++    focal_x = width / (2 * math.tan(fovX / 2))
++    focal_y = height / (2 * math.tan(fovY / 2))
++
++    tanHalfFovY = math.tan(fovY / 2)
++    tanHalfFovX = math.tan(fovX / 2)
++
++    top = tanHalfFovY * znear
++    bottom = -top
++    right = tanHalfFovX * znear
++    left = -right
++
++    offset_x = ((cx - (width / 2)) / focal_x) * znear
++    offset_y = ((cy - (height / 2)) / focal_y) * znear
++    left += offset_x
++    right += offset_x
++    top += offset_y
++    bottom += offset_y
++
++    P = torch.zeros(4, 4)
++    z_sign = 1.0
++    P[0, 0] = 2.0 * znear / (right - left)
++    P[1, 1] = 2.0 * znear / (top - bottom)
++    P[0, 2] = (right + left) / (right - left)
++    P[1, 2] = (top + bottom) / (top - bottom)
++    P[3, 2] = z_sign
++    P[2, 2] = z_sign * zfar / (zfar - znear)
++    P[2, 3] = -(zfar * znear) / (zfar - znear)
++    return P
++
++
+ def getProjectionMatrix(znear, zfar, fovX, fovY):
+     tanHalfFovY = math.tan((fovY / 2))
+     tanHalfFovX = math.tan((fovX / 2))
+@@ -88,4 +120,4 @@ def fov2focal(fov, pixels):
+     return pixels / (2 * math.tan(fov / 2))
+ 
+ def focal2fov(focal, pixels):
+-    return 2*math.atan(pixels/(2*focal))
+\ No newline at end of file
++    return 2*math.atan(pixels/(2*focal))
+diff --git a/vendor/frosting/frosting_utils/mesh_rasterization.py b/vendor/frosting/frosting_utils/mesh_rasterization.py
+index f3e303513d0b5a44959e938c86afe2238b315bd3..1f3b748bc13c1196308699361754955c7821e685 100644
+--- a/vendor/frosting/frosting_utils/mesh_rasterization.py
++++ b/vendor/frosting/frosting_utils/mesh_rasterization.py
+@@ -23,12 +23,16 @@ class RasterizationSettings():
+         image_size=(1080, 1920),
+         blur_radius=0.0,
+         faces_per_pixel=1,
++        max_faces_per_bin=50_000,
+         ):
+         self.image_size = image_size        
+         self._p3d_raster_settings = P3DRasterizationSettings(
+             image_size=image_size,
+             blur_radius=blur_radius,
+             faces_per_pixel=faces_per_pixel,
++            # The PyTorch3D fallback's inferred capacity is too small for the
++            # ~200k-face Frosting shells and reports incomplete rasterization.
++            max_faces_per_bin=max_faces_per_bin,
+         )
+ 
+ 
+@@ -169,4 +173,4 @@ class MeshRasterizer(torch.nn.Module):
+             fragments = self._p3d_mesh_rasterizer(mesh, cameras=p3d_cameras[cam_idx])
+             if return_only_pix_to_face:
+                 return fragments.pix_to_face
+-            return fragments
+\ No newline at end of file
++            return fragments
+diff --git a/vendor/frosting/gaussian_splatting/scene/dataset_readers.py b/vendor/frosting/gaussian_splatting/scene/dataset_readers.py
+index 2a6f904a92048e9146e5999fb4c0f0ff7152aa03..dfb939c874b06294091663e34d9f0faf4d4f7af5 100644
+--- a/vendor/frosting/gaussian_splatting/scene/dataset_readers.py
++++ b/vendor/frosting/gaussian_splatting/scene/dataset_readers.py
+@@ -185,7 +185,11 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
+ 
+         frames = contents["frames"]
+         for idx, frame in enumerate(frames):
+-            cam_name = os.path.join(path, frame["file_path"] + extension)
++            frame_path = Path(frame["file_path"])
++            if frame_path.suffix:
++                relative_image_path = frame_path
++            else:
++                relative_image_path = Path(f"{frame['file_path']}{extension}")
+ 
+             # NeRF 'transform_matrix' is a camera-to-world transform
+             c2w = np.array(frame["transform_matrix"])
+@@ -197,8 +201,8 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
+             R = np.transpose(w2c[:3,:3])  # R is stored transposed due to 'glm' in CUDA code
+             T = w2c[:3, 3]
+ 
+-            image_path = os.path.join(path, cam_name)
+-            image_name = Path(cam_name).stem
++            image_path = os.path.join(path, str(relative_image_path))
++            image_name = relative_image_path.stem
+             image = Image.open(image_path)
+ 
+             im_data = np.array(image.convert("RGBA"))
+@@ -257,4 +261,4 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png"):
+ sceneLoadTypeCallbacks = {
+     "Colmap": readColmapSceneInfo,
+     "Blender" : readNerfSyntheticInfo
+-}
+\ No newline at end of file
++}
+diff --git a/vendor/frosting/gaussian_splatting/utils/camera_utils.py b/vendor/frosting/gaussian_splatting/utils/camera_utils.py
+index 1a54d0ada0361997109c462cde1e088ea5da9ff2..020eb696e3374d12bebfd218f881b8aa1aef51c6 100644
+--- a/vendor/frosting/gaussian_splatting/utils/camera_utils.py
++++ b/vendor/frosting/gaussian_splatting/utils/camera_utils.py
+@@ -16,6 +16,13 @@ from utils.graphics_utils import fov2focal
+ 
+ WARNED = False
+ 
++
++def extract_alpha_mask(resized_image):
++    """Return the alpha channel from a C,H,W image tensor, if present."""
++    if resized_image.shape[0] == 4:
++        return resized_image[3:4, ...]
++    return None
++
+ def loadCam(args, id, cam_info, resolution_scale):
+     orig_w, orig_h = cam_info.image.size
+ 
+@@ -43,8 +50,7 @@ def loadCam(args, id, cam_info, resolution_scale):
+     gt_image = resized_image_rgb[:3, ...]
+     loaded_mask = None
+ 
+-    if resized_image_rgb.shape[1] == 4:
+-        loaded_mask = resized_image_rgb[3:4, ...]
++    loaded_mask = extract_alpha_mask(resized_image_rgb)
+ 
+     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
+                   FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
+diff --git a/vendor/frosting/train.py b/vendor/frosting/train.py
+index f38131a5b0d9c82353a37855949be868ca8bc05e..7aa3a9f388d56f0bf274c27f79f62ec6a698ff16 100644
+--- a/vendor/frosting/train.py
++++ b/vendor/frosting/train.py
+@@ -40,6 +40,8 @@ if __name__ == "__main__":
+                         help='Number of vertices in the extracted mesh.')
+     parser.add_argument('--poisson_depth', type=int, default=-1, 
+                         help="Depth of the octree for Poisson reconstruction. If -1, will compute automatically the depth based on the SuGaR model.")
++    parser.add_argument('--max_poisson_points', type=int, default=0,
++                        help='If > 0, deterministically subsample this many foreground/background points before Open3D Poisson meshing.')
+     parser.add_argument('--cleaning_quantile', type=float, default=0.1, 
+                         help='Quantile to use for cleaning the Poisson mesh.')
+     parser.add_argument('--connected_components_vis_th', type=float, default=0.001, 
+@@ -54,6 +56,9 @@ if __name__ == "__main__":
+     parser.add_argument('--project_mesh_on_surface_points', 
+                         type=str2bool, default=True, 
+                         help='If True, project the mesh on the surface points for better details.')
++    parser.add_argument('--extract_background_mesh',
++                        type=str2bool, default=True,
++                        help='If False, discard background surface points during shell-base extraction. Use this for masked single-object scenes.')
+     
+     
+     # Parameters for Frosting
+@@ -180,6 +185,7 @@ if __name__ == "__main__":
+         'surface_level': args.surface_level,
+         'decimation_target': args.n_vertices_in_mesh,
+         'poisson_depth': args.poisson_depth,
++        'max_poisson_points': args.max_poisson_points,
+         'cleaning_quantile': args.cleaning_quantile,
+         'connected_components_vis_th': args.connected_components_vis_th,
+         'project_mesh_on_surface_points': args.project_mesh_on_surface_points,
+@@ -187,6 +193,7 @@ if __name__ == "__main__":
+         'bboxmin': args.bboxmin,
+         'bboxmax': args.bboxmax,
+         'center_bbox': args.center_bbox,
++        'extract_background_mesh': args.extract_background_mesh,
+         'gpu': args.gpu,
+         'eval': args.eval,
+         'use_centers_to_extract_mesh': False,

@@ -1,0 +1,51 @@
+schema_version: 1
+animal: bison
+outer_source: Existing NeuS2 3D model
+outer_mesh: ../data/bison/outer.obj
+annotation_mesh: ../data/bison/annotation_mesh.obj
+annotations: ../data/bison/parts.json
+shell_stats: ../data/bison/shell_stats.npz
+views: ../data/bison/views
+orientations: ../data/bison/orientations_axial_v1
+eyes: ../data/bison/eyes.ply
+cm_per_scene_unit: 51.87247223806552
+eye_distance_cm: 18.0
+scale_basis: Historical 18.0 cm inter-eye assumption applied to the landmarks; not a physical measurement
+annotation_origin: labeled directly on the outer mesh
+part_labels_approved: true
+smoothness: 8
+sdf_resolution: 64
+semantic_prior:
+  length_cm:
+    belly: 7.0
+    body: 6.0
+    ears: 2.5
+    eyes: 0.0
+    face: 4.0
+    front_paws: 1.5
+    horns: 0.0
+    leg_front: 3.0
+    leg_rear: 3.5
+    neck: 12.0
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 1.2
+    tail: 8.0
+    under_tail: 3.0
+  thickness_cm:
+    belly: 2.4
+    body: 2.0
+    ears: 0.7
+    eyes: 0.0
+    face: 1.2
+    front_paws: 0.35
+    horns: 0.0
+    leg_front: 0.9
+    leg_rear: 1.0
+    neck: 3.5
+    nosetip: 0.0
+    paw_pads: 0.0
+    paws: 0.25
+    tail: 2.5
+    under_tail: 1.0
+  basis: Initial values used in the original project; not physical measurements

@@ -1,0 +1,12 @@
+name: fure-defur
+channels: [conda-forge]
+dependencies:
+  - python=3.10
+  - pip
+  - cxx-compiler
+  - cmake
+  - ninja
+  - ffmpeg
+  - colmap=3.11.1=cpu*
+  - pip:
+      - -e .[test]

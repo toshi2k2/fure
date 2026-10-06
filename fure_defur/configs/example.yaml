@@ -1,0 +1,26 @@
+schema_version: 1
+animal: my_animal
+outer_mesh: ../inputs/outer.obj
+annotation_mesh: ../inputs/outer.obj
+annotations: ../inputs/parts.json
+shell_stats: ../outputs/reconstruction/output/refined_frosting_shell/frosting_scene/shell_stats.npz
+views: ../inputs/prepared/views
+# Optional override for precomputed axial maps. Without it, views/orientations_2
+# is copied when present and validated with the package; when absent, maps are
+# generated from images and masks.
+# orientations: ../inputs/orientations_2
+# orientation_workers: 4
+# Scene units are converted to centimeters with this value.
+cm_per_scene_unit: 100.0
+# Required: describe the measurement or assumption used for this capture.
+scale_basis: ""
+# For an eye-distance scale, uncomment both fields. The run checks them against
+# cm_per_scene_unit before generating geometry.
+# eyes: ../inputs/eyes.ply
+# eye_distance_cm: 5.0
+annotation_origin: labeled directly on the outer mesh
+# Set true after a person has checked the part labels on the 3D model.
+part_labels_approved: false
+smoothness: 8.0
+sdf_resolution: 64
+# shape_vlm also requires semantic_prior.length_cm, thickness_cm, and basis.

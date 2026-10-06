@@ -1,0 +1,50 @@
+schema_version: 1
+animal: panda
+outer_source: Existing NeuS2 3D model
+outer_mesh: ../data/panda/outer.obj
+annotation_mesh: ../data/panda/annotation_mesh.obj
+annotations: ../data/panda/parts.json
+shell_stats: ../data/panda/shell_stats.npz
+views: ../data/panda/views
+eyes: ../data/panda/eyes.ply
+cm_per_scene_unit: 99.49081260157428
+eye_distance_cm: 11.0
+scale_basis: Historical 11.0 cm inter-eye assumption applied to the landmarks; not a physical measurement
+annotation_origin: transferred from the segmented 3D model
+part_labels_approved: true
+smoothness: 8
+sdf_resolution: 64
+semantic_prior:
+  length_cm:
+    leg_front: 4
+    leg_rear: 4
+    paw_pads: 0
+    paws: 3
+    front_paws: 3
+    belly: 7.5
+    neck: 7
+    face: 3
+    ears: 4
+    inner_earcanal: 0.0
+    under_tail: 5
+    eyes: 0
+    tail: 6
+    nosetip: 0
+    body: 6
+  thickness_cm:
+    leg_front: 2.5
+    leg_rear: 2.5
+    paw_pads: 0.0
+    front_paws: 1.5
+    paws: 1.5
+    belly: 4.0
+    neck: 4.5
+    face: 1.5
+    ears: 2.0
+    inner_earcanal: 0.0
+    under_tail: 3.0
+    eyes: 0.0
+    tail: 3.5
+    nosetip: 0.0
+    body: 3.5
+  basis: Initial values used in the original project; not physical measurements

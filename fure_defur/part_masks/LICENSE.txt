@@ -1,0 +1,13 @@
+FurE part masks
+
+Copyright 2026 Prakhar Kaushik
+
+These part masks are licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International license (CC BY-NC 4.0):
+
+https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+You may share and adapt the masks for noncommercial use with attribution and
+an indication of changes. Suggested attribution:
+
+FurE part masks, Prakhar Kaushik, CC BY-NC 4.0.

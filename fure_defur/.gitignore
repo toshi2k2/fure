@@ -1,0 +1,35 @@
+# Animal data and generated results
+/data/
+/outputs/
+/work/
+/release-assets/
+
+# Downloaded third-party source
+/vendor/Directional/
+/vendor/NeuS2/
+/vendor/frosting/
+
+# Python and build files
+/.conda-envs/
+/.conda/
+/.venv/
+/.cache/
+/.pytest_cache/
+/.mypy_cache/
+/.ruff_cache/
+/.coverage
+/htmlcov/
+/build/
+/dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+*.so
+
+# Local configuration
+.env
+.env.*
+!*.example
+*.log
+.DS_Store
+.github/

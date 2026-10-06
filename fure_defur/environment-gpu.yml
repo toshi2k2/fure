@@ -1,0 +1,29 @@
+name: fure-defur-gpu
+channels:
+  - pytorch3d
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - pytorch=2.0.1
+  - torchvision=0.15.2
+  - pytorch-cuda=11.8
+  - cuda-version=11.8
+  - cuda-nvcc=11.8
+  - cuda-cudart-dev=11.8
+  - cuda-cccl=11.8
+  - pytorch3d=0.7.4
+  - numpy<2
+  - cmake<4
+  - ninja
+  - ffmpeg
+  - fvcore
+  - iopath
+  - rich
+  - plotly
+  - tqdm
+  - pip:
+      - PyMCubes==0.1.4
+      - -e .[test]
