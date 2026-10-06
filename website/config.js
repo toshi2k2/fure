@@ -2,7 +2,7 @@ export const site = {
   title:
     "FurE: Efficient Instance-Specific 3D Fur Reconstruction without Animal-Fur Datasets",
   paper: "assets/paper/FurE.pdf",
-  code: "https://github.com/toshi2k2/fure",
+  code: "https://github.com/toshi2k2/fure/tree/fure-defur-code/fure_defur",
   video: "assets/video/fox-strong-wind-4k60.mp4",
   videoFallback: "assets/video/fox-strong-wind-4k60.webm",
   authorInterval: 5000,
@@ -72,12 +72,12 @@ export const site = {
   ],
 };
 
-export const bibtex = `@misc{fure,
-  title  = {FurE: Efficient Instance-Specific 3D Fur
-            Reconstruction without Animal-Fur Datasets},
-  author = {Sarkar, Srinjay and Kaushik, Prakhar and
-            Paul, Soumava and Yuille, Alan},
-  year   = {TODO},
-  note   = {Placeholder: publication details forthcoming},
-  url    = {https://toshi2k2.github.io/fure/}
+export const bibtex = `@misc{sarkar2026fureefficientinstancespecific3d,
+  title={FurE: Efficient Instance-Specific 3D Fur Reconstruction without Animal-Fur Datasets},
+  author={Srinjay Sarkar and Prakhar Kaushik and Soumava Paul and Alan Yuille},
+  year={2026},
+  eprint={2609.35770},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2609.35770},
 }`;

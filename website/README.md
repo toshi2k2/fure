@@ -1,6 +1,6 @@
 # FurE Project Website
 
-A self-contained static research page for the draft in `../paper/`. No backend,
+A self-contained static research page for the FurE paper. No backend,
 API key, CDN, Python, Blender or research dataset is needed to serve the prepared
 website. Source assets and research results are not modified.
 
@@ -39,9 +39,8 @@ the visitor requests reduced motion. Other authors do not move. Author markup
 is also present in HTML for search engines and no-JavaScript visitors; update it
 alongside `config.js` if authorship changes.
 
-The PDF is a local build of the supplied current draft, not an external preprint.
-The BibTeX deliberately contains `year = {TODO}` and a placeholder note. Update
-both `config.js` and the HTML fallback when publication metadata is available.
+The PDF is bundled with the website. The BibTeX is kept in `config.js` and in
+the HTML fallback so the citation remains available without JavaScript.
 The displayed 52-minute / 10.5-hour comparison is attributed to the current
 manuscript's strand-training table (36 views, RTX A5000), not a new benchmark.
 

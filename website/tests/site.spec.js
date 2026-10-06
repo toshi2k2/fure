@@ -36,12 +36,16 @@ test("paper, citation and protected static serving work", async ({
   ).toBe(416);
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/");
+  await expect(page.getByRole("link", { name: /^Code/ })).toHaveAttribute(
+    "href",
+    site.code,
+  );
   await page.locator("#copy-bibtex").click();
   await expect(page.locator("#copy-status")).toHaveText(
-    "Placeholder BibTeX copied to the clipboard.",
+    "BibTeX copied to the clipboard.",
   );
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
-    "year   = {TODO}",
+    "eprint={2609.35770}",
   );
 });
 

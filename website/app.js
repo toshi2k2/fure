@@ -266,8 +266,7 @@ $("copy-bibtex").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(bibtex);
     button.textContent = "Copied ✓";
-    $("copy-status").textContent =
-      "Placeholder BibTeX copied to the clipboard.";
+    $("copy-status").textContent = "BibTeX copied to the clipboard.";
   } catch {
     const range = document.createRange();
     range.selectNodeContents($("bibtex"));
